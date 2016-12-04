@@ -3,6 +3,9 @@ library(lubridate)
 library(stringr)
 library(tidyr)
 library(zoo)
+library(chron)
+#System Date
+date <-as.Date(Sys.Date())
 
 #####About#####
 #This file is for basic data importation, cleaning, and munging.  Any model
@@ -18,11 +21,16 @@ ira_data<- read.csv("R:/AIM/Advanced Analytics/OGP_IRA/ira_data.csv",
                 stringsAsFactors=FALSE
 )
 
+#Load year format function
+source("R:/AIM/Advanced Analytics/Functions/year_format.r")
+
 #Format dates
 ira_data$trans_date <- dmy(ira_data$trans_date)
 ira_data$year <- year(ira_data$trans_date)
+ira_data$birth_date<-dmy(ira_data$birth_date)
 
 #Prim purp roll-up
+
 student_support <- c("GSS", "BSS", "USS")
 
 ira_data$prim_purp <- replace(ira_data$prim_purp, 
@@ -47,7 +55,7 @@ lookup<- inflation_lookup(2016)
 adjust2016<- inflation_adjuster(2016)
 
 #Campaign Dates
-start <- as.Date(c("1986-07-01", "1996-07-01", "2006-07-01"))
+start <- as.Date(c("1986-07-01", "1996-07-01", "2005-07-01"))
 end <- as.Date(c("1990-07-01", "2000-12-31", "2013-12-31"))
 
 campaigndates<- data.frame(start=as.Date(start),
@@ -57,9 +65,12 @@ campaigndates<- data.frame(start=as.Date(start),
 #x-axis plotting
 ira_adj <- ira_data %>%
   filter(person=="P")%>%
+  group_by(id)%>%
+  mutate(age=as.numeric((difftime((as.Date(Sys.Date())), birth_date, units="weeks"))/52),
+         est_age_cc=2016-class_year+23)%>%
+  ungroup()%>%
   mutate(yeardate=floor_date(trans_date, unit="year"),
          yearmon=floor_date(trans_date, unit="month"))%>%
-  group_by(id)%>%
   group_by(year)%>%
   mutate(adjustment=adjust2016(year))%>%
   ungroup()%>%
@@ -68,6 +79,7 @@ ira_adj <- ira_data %>%
   mutate(first_trans_date=first(trans_date),
          gift_num=as.numeric(row_number()),
          num_ira_gifts=sum(ira_gift),
+         ira_donor=ifelse(sum(ira_gift)>=1,1,0),
          first_ira=ira_gift==1 & !duplicated(ira_gift==1),
          first_ira=replace(first_ira, which(first_ira=='TRUE'),1),
          ira_law=ifelse(year>=2006, 1,0),
@@ -124,6 +136,31 @@ ira_adj <- ira_data %>%
   mutate(total_giving_span=replace(total_giving_span, which(total_giving_span==0),1),
          outlier_score=((total_giving*num_gifts)/total_giving_span),
          norm_outlier_score=(outlier_score-min(outlier_score))/(max(outlier_score)-min(outlier_score)))
+
+#Create data.frame of ira_donors with no age and estimate based on first IRA gift date
+ira_ageless<-ira_adj%>%
+  select(id, ira_donor, first_ira, age, trans_date)%>%
+  filter(ira_donor==1 &is.na(age))%>%
+  select(-age)%>%
+  group_by(id)%>%
+  arrange(desc(first_ira))%>%
+  mutate(first_ira_date=paste(first(trans_date)),
+         time_since_first=as.numeric((difftime((as.Date(Sys.Date())), first_ira_date, units="weeks"))/52),
+         est_age=time_since_first+70.5)%>%
+  select(id, est_age)
+
+#Join the estimated age
+ira_adj<-ira_adj%>%
+  left_join(ira_ageless, by="id")
+
+#Remove useless data.frame from environment
+rm(list='ira_ageless')
+
+#Load move_column function
+source("R:/AIM/Advanced Analytics/Functions/move_column.r")
+
+#Move estimated age column to be next to other age columns
+ira_adj<-move_column(ira_adj, c("est_age"), "after", "age")
   
 #Add deciles based on dataset
 ira_adj<-ira_adj%>%
@@ -197,6 +234,7 @@ id_summary<- ira_adj%>%
          -amt_change, -larger_gift, -time_between,
          -time_from_first, -span_quartile)%>%
   group_by(id)%>%
+  mutate(num_ira=max(num_ira_gifts))%>%
   filter(row_number(id)==1)
 
 #Pre/post summary for plotting.
