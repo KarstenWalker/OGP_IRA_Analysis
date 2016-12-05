@@ -28,6 +28,7 @@ source("R:/AIM/Advanced Analytics/Functions/year_format.r")
 ira_data$trans_date <- dmy(ira_data$trans_date)
 ira_data$year <- year(ira_data$trans_date)
 ira_data$birth_date<-dmy(ira_data$birth_date)
+ira_data$death_date<-dmy(ira_data$death_date)
 
 #Prim purp roll-up
 
