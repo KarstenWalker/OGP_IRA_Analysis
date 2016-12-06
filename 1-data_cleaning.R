@@ -67,9 +67,10 @@ campaigndates<- data.frame(start=as.Date(start),
 ira_adj <- ira_data %>%
   filter(person=="P")%>%
   group_by(id)%>%
-  mutate(age=as.numeric((difftime((as.Date(Sys.Date())), birth_date, units="weeks"))/52),
+  mutate(age_birth=as.numeric((difftime((as.Date(Sys.Date())), birth_date, units="weeks"))/52),
          years_since_death=as.numeric((difftime((as.Date(Sys.Date())), death_date, units="weeks"))/52),
-         est_age_cc=2016-class_year+23)%>%
+         years_since_death=ifelse(is.na(years_since_death),0,years_since_death),
+         age_cc=2016-class_year+23)%>%
   ungroup()%>%
   mutate(yeardate=floor_date(trans_date, unit="year"),
          yearmon=floor_date(trans_date, unit="month"))%>%
@@ -141,15 +142,15 @@ ira_adj <- ira_data %>%
 
 #Create data.frame of ira_donors with no age and estimate based on first IRA gift date
 ira_ageless<-ira_adj%>%
-  select(id, ira_donor, first_ira, age, trans_date)%>%
-  filter(ira_donor==1 &is.na(age))%>%
-  select(-age)%>%
+  select(id, ira_donor, first_ira, age_birth, trans_date)%>%
+  filter(ira_donor==1 &is.na(age_birth))%>%
+  select(-age_birth)%>%
   group_by(id)%>%
   arrange(desc(first_ira))%>%
   mutate(first_ira_date=paste(first(trans_date)),
          time_since_first=as.numeric((difftime((as.Date(Sys.Date())), first_ira_date, units="weeks"))/52),
-         est_age=time_since_first+70.5)%>%
-  select(id, est_age)%>%
+         age_first_ira=time_since_first+70.5)%>%
+  select(id, age_first_ira)%>%
   distinct(.keep_all = TRUE)
 
 #Join the estimated age
@@ -163,13 +164,18 @@ rm(list='ira_ageless')
 source("R:/AIM/Advanced Analytics/Functions/move_column.r")
 
 #Move estimated age column to be next to other age columns
-ira_adj<-move_column(ira_adj, c("est_age"), "after", "age")%>%mutate(age=age-years_since_death,
-                                                                     est_age=est_age-years_since_death,
-                                                                     est_age_cc=est_age_cc-years_since_death)
+#Calculate age at death for deceased. Derive final age based on hierarchy 1.age 2.est_age_cc 3.est_age
+#Reorder birth, death and age related columns so they appear together
+ira_adj<-move_column(ira_adj, c("age_first_ira"), "after", "age_cc")%>%mutate(age_birth=age_birth-years_since_death,
+                                                                           age_first_ira=age_first_ira-years_since_death,
+                                                                           age_cc=age_cc-years_since_death,
+                                                                           age=coalesce(age_birth,age_cc,age_first_ira))
 ira_adj<-move_column(ira_adj, c("death_date"), "before", "years_since_death")
-ira_adj<-move_column(ira_adj, c("birth_date"), "before", "age")
-ira_adj<-move_column(ira_adj, c("est_age_cc"), "after", "est_age")
+ira_adj<-move_column(ira_adj, c("birth_date"), "before", "age_birth")
 ira_adj<-move_column(ira_adj, c("class_year"), "after", "birth_date")
+ira_adj<-move_column(ira_adj, c("age_birth"), "before", "age_cc")
+ira_adj<-move_column(ira_adj, c("age"), "after", "age_first_ira")
+
 
 
   

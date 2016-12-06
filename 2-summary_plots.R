@@ -71,7 +71,7 @@ ggplot(pre_post_id, aes(num_gifts, fill=ira_law))+
                                                  sd=sd(pre_post_id$num_gifts))))+
   theme_kw
 
-plot(g_law)
+
 
 #Density plots superimposed over histogram
 ggplot(pre_post_id, aes(num_gifts, fill=ira_law))+
@@ -87,3 +87,21 @@ ggplot(ira_adj, aes(norm_outlier_score))+
   geom_density()+
   xlim(0,.25)+
   theme_kw
+
+# Adjusted total giving by age (current or age at death) by IRA vs Non-IRA
+plot_df<-ira_adj%>%
+  select(id,gender_code,ira_donor,age,num_gifts,adj_total_giving)%>%
+  group_by(id,gender_code,ira_donor,age)%>%distinct(.keep_all=TRUE)
+
+ggplot(plot_df,aes(x=age,y=adj_total_giving,color=ira_donor))+
+  geom_point(aes(age,color=ira_donor))+
+  xlim(55,110)+
+  ylim(0,800000)+
+  geom_smooth(method="lm")+
+  facet_wrap(~ira_donor)
+
+#Yearlty total giving by IRA donor vs Non IRA donor, before and after the change in law.
+plot_df1<-ira_adj%>%
+  select(id,year,year_total,ira_law,ira_donor)%>%
+  distinct(.keep_all=TRUE)
+
