@@ -68,6 +68,7 @@ ira_adj <- ira_data %>%
   filter(person=="P")%>%
   group_by(id)%>%
   mutate(age=as.numeric((difftime((as.Date(Sys.Date())), birth_date, units="weeks"))/52),
+         years_since_death=as.numeric((difftime((as.Date(Sys.Date())), death_date, units="weeks"))/52),
          est_age_cc=2016-class_year+23)%>%
   ungroup()%>%
   mutate(yeardate=floor_date(trans_date, unit="year"),
@@ -148,7 +149,8 @@ ira_ageless<-ira_adj%>%
   mutate(first_ira_date=paste(first(trans_date)),
          time_since_first=as.numeric((difftime((as.Date(Sys.Date())), first_ira_date, units="weeks"))/52),
          est_age=time_since_first+70.5)%>%
-  select(id, est_age)
+  select(id, est_age)%>%
+  distinct(.keep_all = TRUE)
 
 #Join the estimated age
 ira_adj<-ira_adj%>%
@@ -161,7 +163,15 @@ rm(list='ira_ageless')
 source("R:/AIM/Advanced Analytics/Functions/move_column.r")
 
 #Move estimated age column to be next to other age columns
-ira_adj<-move_column(ira_adj, c("est_age"), "after", "age")
+ira_adj<-move_column(ira_adj, c("est_age"), "after", "age")%>%mutate(age=age-years_since_death,
+                                                                     est_age=est_age-years_since_death,
+                                                                     est_age_cc=est_age_cc-years_since_death)
+ira_adj<-move_column(ira_adj, c("death_date"), "before", "years_since_death")
+ira_adj<-move_column(ira_adj, c("birth_date"), "before", "age")
+ira_adj<-move_column(ira_adj, c("est_age_cc"), "after", "est_age")
+ira_adj<-move_column(ira_adj, c("class_year"), "after", "birth_date")
+
+
   
 #Add deciles based on dataset
 ira_adj<-ira_adj%>%
