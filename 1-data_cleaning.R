@@ -65,7 +65,7 @@ campaigndates<- data.frame(start=as.Date(start),
 #Adjust transactions for inflation, create summary statistics. yeardate column is for better
 #x-axis plotting
 ira_adj <- ira_data %>%
-  filter(person=="P")%>%
+  filter(person=="P" & !is.na(birth_date))%>%
   group_by(id)%>%
   mutate(age_birth=as.numeric((difftime((as.Date(Sys.Date())), birth_date, units="weeks"))/52),
          years_since_death=as.numeric((difftime((as.Date(Sys.Date())), death_date, units="weeks"))/52),
@@ -79,7 +79,11 @@ ira_adj <- ira_data %>%
   ungroup()%>%
   group_by(id) %>%
   arrange(trans_date, nbr)%>%
-  mutate(first_trans_date=first(trans_date),
+  mutate(trans_age_birth=as.numeric((difftime(trans_date, birth_date, units="weeks"))/52),
+         time_since_trans=as.numeric((difftime((as.Date(Sys.Date())), trans_date, units="weeks"))/52),
+         trans_age_cc=age_cc-time_since_trans,
+         ira_eligible=ifelse(trans_age_birth >=70.5,1,0),
+         first_trans_date=first(trans_date),
          gift_num=as.numeric(row_number()),
          num_ira_gifts=sum(ira_gift),
          ira_donor=ifelse(sum(ira_gift)>=1,1,0),
@@ -93,6 +97,7 @@ ira_adj <- ira_data %>%
          post_law_ira=sum(ifelse(ira_law==1 &ira_gift==1,1,0)),
          total_giving=sum(amt),
          adj_amt=amt/adjustment,
+         ira_amt=as.numeric(ifelse(ira_gift==1, paste(as.character(amt)),"0")),
          adj_total_giving=sum(adj_amt),
          amt_change=adj_amt-lag(adj_amt),
          mean_amt=mean(adj_amt),
@@ -111,12 +116,20 @@ ira_adj <- ira_data %>%
          total_giving_span=max(time_from_first),
          total_giving_span=replace(total_giving_span, which(is.na(total_giving_span)),1),
          pct_giving_span=time_from_first/total_giving_span)%>%
-  ungroup()%>%
+  arrange(yearmon)%>%
+  mutate(eligible=ifelse(ira_eligible==1, 1, 0),
+         yearmon_eligible_flg=if_else(row_number(id)==1 & eligible==1,1,0))%>%
+  select(-eligible)%>%
   group_by(id)%>%
   arrange(year)%>%
   mutate(year_total=sum(adj_amt),
          year_total_change=year_total-lag(year_total),
          year_total_pct=(year_total/lag(year_total)-1),
+         year_ira_total=sum(ira_amt),
+         year_ira_total_change=year_ira_total-lag(year_ira_total),
+         year_ira_total_pct=(year_ira_total/lag(year_ira_total)-1),
+         year_ira_prop=year_ira_total/100000,
+         year_ira_gifts=sum(ira_gift),
          year_mean=mean(adj_amt),
          year_mean_change=year_mean-lag(year_mean),
          year_mean_pct=(year_mean/lag(year_mean)-1),
@@ -127,8 +140,7 @@ ira_adj <- ira_data %>%
          year_gift_pct=(year_gifts/lag(year_gifts)-1),
          year_max=max(adj_amt),
          year_num_ira=sum(ira_gift),
-         year_num_larger=sum(num_larger, na.rm=TRUE)
-  )%>%
+         year_num_larger=sum(num_larger, na.rm=TRUE))%>%
   arrange(gift_num)%>%
   mutate(span_quartile=ifelse(pct_giving_span>=0 & pct_giving_span<=.25, 1,
                               ifelse(pct_giving_span>.25 & pct_giving_span<=.5, 2,
@@ -166,18 +178,16 @@ source("R:/AIM/Advanced Analytics/Functions/move_column.r")
 #Move estimated age column to be next to other age columns
 #Calculate age at death for deceased. Derive final age based on hierarchy 1.age 2.est_age_cc 3.est_age
 #Reorder birth, death and age related columns so they appear together
-ira_adj<-move_column(ira_adj, c("age_first_ira"), "after", "age_cc")%>%mutate(age_birth=age_birth-years_since_death,
-                                                                           age_first_ira=age_first_ira-years_since_death,
-                                                                           age_cc=age_cc-years_since_death,
-                                                                           age=coalesce(age_birth,age_cc,age_first_ira))
-ira_adj<-move_column(ira_adj, c("death_date"), "before", "years_since_death")
-ira_adj<-move_column(ira_adj, c("birth_date"), "before", "age_birth")
-ira_adj<-move_column(ira_adj, c("class_year"), "after", "birth_date")
-ira_adj<-move_column(ira_adj, c("age_birth"), "before", "age_cc")
-ira_adj<-move_column(ira_adj, c("age"), "after", "age_first_ira")
-
-
-
+ira_adj<-ira_adj%>%
+  move_column(c("age_first_ira"), "after", "age_cc")%>%
+  mutate(age_birth=age_birth-years_since_death,
+         age_first_ira=age_first_ira-years_since_death,
+         age_cc=age_cc-years_since_death,age=coalesce(age_birth,age_cc,age_first_ira))%>%
+  move_column(c("death_date"), "before", "years_since_death")%>%move_column(c("birth_date"), "before", "age_birth")%>%
+  move_column(c("class_year"), "after", "birth_date")%>%
+  move_column(c("age_birth"), "before", "age_cc")%>%
+  move_column(c("age"), "after", "age_first_ira")%>%
+  move_column(c("ira_eligible"), "after", "trans_date")
   
 #Add deciles based on dataset
 ira_adj<-ira_adj%>%
@@ -263,7 +273,9 @@ pre_post_id<- ira_adj%>%
   summarise(num_gifts=n())
 
 #Year/month summary.Useful for time series conversion and plotting.
-#Daily data is usually too granular
+#Daily data is usually too granular.
+#PLEASE NOTE: Amt uses unadjusted amounts due to the fact that we have to view
+#IRA gift amounts as nominal amounts.
 ira_yearmon<-ira_adj%>%
   ungroup()%>%
   filter(norm_outlier_score <.10)%>%
@@ -273,7 +285,10 @@ ira_yearmon<-ira_adj%>%
             num_gifts= n(),
             num_ira_gifts=sum(ira_gift),
             num_first_ira=sum(first_ira),
-            total_giving=sum(adj_amt),
+            num_eligible= sum(yearmon_eligible_flg),
+            total_giving=sum(amt),
+            total_adj_giving=sum(adj_amt),
+            total_ira_giving=sum(ira_amt),
             mean_amt=mean(adj_amt),
             median_amt=median(adj_amt),
             max_amt=max(adj_amt),
@@ -283,12 +298,16 @@ ira_yearmon<-ira_adj%>%
          gift_change=num_gifts-lag(num_gifts),
          pct_gift_change=(num_gifts/lag(num_gifts)-1),
          ira_donor_change=num_ira_donors-lag(num_ira_donors),
+         pct_ira_donor_change=(num_ira_donors/lag(num_ira_donors)-1),
+         num_eligible_change=num_eligible-lag(num_eligible),
+         pct_eligible_change=(num_eligible/lag(num_eligible)-1),
+         prop_eligible_gift=num_ira_donors/num_eligible,
          prop_ira_donor_change=(num_ira_donors/lag(num_ira_donors)-1),
          prop_ira_donors=num_ira_donors/num_donors,
          prop_ira_gifts=num_ira_gifts/num_gifts,
          prop_ira_gift_change=prop_ira_gifts-lag(prop_ira_gifts),
-         total_giving_change=total_giving-lag(total_giving),
-         pct_giving_change=(total_giving/lag(total_giving)-1))
+         total_adj_giving_change=total_giving-lag(total_adj_giving),
+         pct_adj_giving_change=(total_giving/lag(total_adj_giving)-1))
 
 #Year summary.Could be useful for reporting.
 ira_year<-ira_adj%>%
