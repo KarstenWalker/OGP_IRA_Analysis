@@ -4,23 +4,48 @@ library(scales)
 library(seasonal)
 library(forecast)
 
+#Load plotting theme
+source("R:/AIM/Advanced Analytics/Functions/theme_clean.r")
+
+#Load legend move function
+source("R:/AIM/Advanced Analytics/Functions/legend_move.r")
+
 #Decomposition using ggseas
-ggsdc(ira_ymts_tsdf, aes(x = x, y = y), method = "seas", frequency=12, start=c(1997, 1)) +
+ggsdc(ira_ymts_num_tsdf, aes(x = x, y = y), method = "seas", frequency=12, start=c(1997, 1)) +
   geom_line(color="light blue")+
-  theme_kw+
   scale_y_continuous(labels = comma)+
   xlab(" ")+
   ylab(" ")+
-  theme_kw
+  theme_clean()
+
+ggsdc(ira_ymts_ira_tsdf, aes(x = x, y = y), method = "seas", frequency=12, start=c(1997, 1)) +
+  geom_line(color="light blue")+
+  scale_y_continuous(labels = comma)+
+  xlab(" ")+
+  ylab(" ")+
+  theme_clean()
+
 
 #Seasonally transformed data using ggplot. Requires data.frame with both raw
 #and adjusted values.  Can use facets to separate or include on one plot overlaid.
 ggplot()+
-  geom_line(data=ira_seasonal, aes(x=date, y=value, color=variable))+
-  ggtitle("Seasonally Transformed Giving Total")+
+  geom_line(data=ira_num_seasonal, aes(x=date, y=value, color=variable))+
+  ggtitle("Seasonally Transformed Number of Gifts")+
   scale_y_continuous(labels = comma)+
   scale_colour_manual(values = c("light green", "light blue"))+
-  theme_kw+
+  theme_clean()+
+  theme(axis.title.y=element_blank(),
+        axis.title.x=element_blank(),
+        plot.background=element_blank(),
+        legend.title=element_blank())
+
+ggplot()+
+  geom_line(data=ira_seasonal_ira, aes(x=date, y=value, color=variable))+
+  ggtitle("Seasonally Transformed Number of Gifts")+
+  scale_y_continuous(labels = comma)+
+  scale_colour_manual(values = c("light green", "light blue"))+
+  theme_clean()+
+  ylim(0,150)+
   theme(axis.title.y=element_blank(),
         axis.title.x=element_blank(),
         plot.background=element_blank(),
@@ -28,30 +53,43 @@ ggplot()+
 
 #Seasonal transformation and plotting in 1 step using ggseas. Requires the
 #non-adjusted time series
-ira_ymts_fort<-fortify(ira_ymts)
-ira_ymts_fort$x<-as.yearmon(ira_ymts_fort$x)
+ira_ymts_fort_num<-fortify(ira_ymts_num)
+ira_ymts_fort_num$Index<-as.yearmon(ira_ymts_fort_num$Index)
+
 ggplot(data=ira_ymts_fort, aes(x=Index, y=Data))+
   geom_line(color="light green")+
   stat_seas(color="light blue", start = c(1997, 1), frequency=12)+
   scale_y_continuous(labels = comma)+
-  theme_kw+
+  theme_clean()+
   theme(axis.title.y=element_blank(),
         axis.title.x=element_blank(),
         plot.background=element_blank(),
         legend.title=element_blank())
 
+ira_ymts_fort_ira<-fortify(ira_ymts_ira)
+ira_ymts_fort$Index<-as.yearmon(ira_ymts_fort$Index)
+
+ggplot(data=ira_ymts_fort_ira, aes(x=Index, y=Data))+
+  geom_line(color="light green")+
+  stat_seas(color="light blue", start = c(1997, 1), frequency=12)+
+  scale_y_continuous(labels = comma)+
+  theme_clean()+
+  ylim(0,150)+
+  theme(axis.title.y=element_blank(),
+        axis.title.x=element_blank(),
+        plot.background=element_blank(),
+        legend.title=element_blank())
 
 #If using the seasonal package this is how the forecast is extracted from the model
 ira_x13_forecast<- series(ira_x13, "forecast.forecasts")
-m3 <-series(m, "forecast.forecasts")
-m4 <- ts(m3, start=2016, frequency = 12)
+ira_x13_
 foredf<- tsdf(m4)
 foredf$date <- as.Date(yearmon(foredf$x))
 
-#If using the auto.Arima method from the forecast package this is how the model is extracted
-ira_auto_arima<- auto.arima(ira_ymts)
-
-plot(forecast(ira_auto_arima, h=120))
+#If using the auto.Arima method from the forecast package can use the autoplot
+#function, which is just a ggplot function
+autoplot(ira_auto_forecast)+
+  theme_kw +ggtitle("")+scale_y_log10()
 
 
 ggplot()+
