@@ -10,6 +10,17 @@ source("R:/AIM/Advanced Analytics/Functions/theme_clean.r")
 #Load legend move function
 source("R:/AIM/Advanced Analytics/Functions/legend_move.r")
 
+#Both seasonally adjusted metric on one plot
+ggplot()+
+  geom_line(data=(ira_adjusted%>%
+                    filter(variable=="raw")),
+            aes(x=date, y=value, colour=source), size=1)+
+  geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+  ylim(0,300)+
+  scale_x_date()+
+  theme_clean()
+
+
 #Decomposition using ggseas
 ggsdc(ira_ymts_num_tsdf, aes(x = x, y = y), method = "seas", frequency=12, start=c(1997, 1)) +
   geom_line(color="light blue")+

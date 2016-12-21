@@ -39,7 +39,7 @@ ira_ymts_num_ira_gifts_df <- ira_yearmon %>%
   filter(yearmon>="2006-01-01")
 
 #Creates a .ts format time series
-ira_ymts_num_gift <- ira_ymts_num_gift_df$num_gift_gifts
+ira_ymts_num_gift <- ira_ymts_num_gift_df$num_gifts
 ira_ymts_num_gift <-ts(ira_ymts_num_gift, frequency=12, start=c(1997, 1))
 
 ira_ymts_num_ira_gifts<- ira_ymts_num_ira_gifts_df$num_ira_gifts
@@ -193,7 +193,6 @@ ira_num_gift_seasonal <- fortify(stats::decompose(ira_ymts_num_gift)) %>%
   group_by(date) %>%
   mutate(adjusted=raw-seasonal) %>%
   select(date, raw, adjusted) %>%
-  melt(id.vars="date")%>%
   mutate(source=as.character(ifelse(!is.na(adjusted), "num", "num"))) %>%
   melt(id.vars=c("date","source"))
 
