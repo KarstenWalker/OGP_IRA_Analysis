@@ -21,6 +21,22 @@ ira_data<- read.csv("R:/AIM/Advanced Analytics/OGP_IRA/ira_data.csv",
                 stringsAsFactors=FALSE
 )
 
+#Read in mailing data
+ira_mailings<- read.csv("R:/AIM/Advanced Analytics/OGP_IRA/mailing_list.csv",
+                    header=TRUE,
+                    stringsAsFactors=FALSE
+)
+
+names(ira_mailings)<- tolower(names(ira_mailings))
+
+ira_mailings<-ira_mailings%>%
+  rename(touch=marketing.touch.name,
+         date=marketing.touch.date,
+         id=cadsid)
+
+ira_mailings$type<-tolower(ira_mailings$type)
+ira_mailings$touch<- tolower(ira_mailings$touch)
+
 #Load year format function
 source("R:/AIM/Advanced Analytics/Functions/year_format.r")
 
@@ -29,7 +45,14 @@ ira_data$trans_date <- dmy(ira_data$trans_date)
 ira_data$year <- year(ira_data$trans_date)
 ira_data$birth_date<-dmy(ira_data$birth_date)
 ira_data$death_date<-dmy(ira_data$death_date)
+ira_mailings$date= mdy(ira_mailings$date)
 
+#Create mailing summary data frame
+ira_mailings_summary<- ira_mailings%>%
+  group_by(date, type, touch)%>%
+  summarize(donors=n_distinct(id))
+
+#Per ID solicitations
 #Prim purp roll-up
 
 student_support <- c("GSS", "BSS", "USS")
@@ -314,6 +337,38 @@ ira_adj<-ira_adj%>%
          pre_post_larger=post_law_larger-pre_law_larger,
          frequency_change=post_time_between-pre_time_between)%>%
   ungroup()
+
+#Mailings per ID
+ira_mailings_response<- ira_mailings%>%
+  select(id, date, type)%>%
+  bind_rows((ira_adj%>%
+               select(id, trans_date, ira_gift)%>%
+               group_by(id)%>%
+               mutate(type=if_else(ira_gift==1, "ira_gift", "non_ira_gift")
+                      )%>%
+               select(-ira_gift)%>%
+               rename(date=trans_date)%>%
+               filter(date>"2011-09-21")
+             )
+            )%>%
+  group_by(id)%>%
+  arrange(date)%>%
+  mutate(response=ifelse(type%in% c("ira_gift", "non_ira_gift") &
+                           lag(type)%in% c("postcard", "html", "letter"),1,0),
+         response_type=ifelse(response==1, paste(type), "0")
+         )%>%
+  left_join((ira_adj%>%select(id, trans_date, adj_amt)%>%rename(date=trans_date)), by=c("id","date")
+            )%>%
+  group_by(id)%>%
+  arrange(date)%>%
+  mutate(response_time=ifelse(
+    response==1, paste0(
+      as.numeric(
+        difftime(
+          date, lag(date), units="days")
+        )
+      ), NA)
+    )
 
 #Per ID Summary
 id_summary<- ira_adj%>%
