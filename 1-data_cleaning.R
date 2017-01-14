@@ -360,15 +360,35 @@ ira_mailings_response<- ira_mailings%>%
   left_join((ira_adj%>%select(id, trans_date, adj_amt)%>%rename(date=trans_date)), by=c("id","date")
             )%>%
   group_by(id)%>%
+  filter(response_type !="non_ira_gift")%>%
   arrange(date)%>%
-  mutate(response_time=ifelse(
+  mutate(response_time=as.numeric(ifelse(
     response==1, paste0(
       as.numeric(
         difftime(
           date, lag(date), units="days")
         )
-      ), NA)
+      ), NA)),
+    respondent=ifelse(sum(response)>=1,1,0)
     )
+
+ira_responses<-ira_mailings_response%>%
+  group_by(id)%>%
+  filter(respondent==1)%>%
+  group_by(id, date, type)%>%
+  summarize(amt=sum(adj_amt),
+            response_time=sum(response_time, na.rm = TRUE))%>%
+  ungroup()%>%
+  group_by(id)%>%
+  arrange(date)%>%
+  filter(type!="non_ira_gift")%>%
+  mutate(response_touch=ifelse(is.na(amt)& !is.na(lead(amt)),1,0),
+         response_gift=ifelse(lag(response_touch)==1 & !is.na(amt), 1,0),
+         response_pair=ifelse(response_touch==1 & lead(response_gift)==1 |
+           response_gift==1 & lag(response_touch==1),1,0))%>%
+  filter(response_pair==1)%>%
+  select(-response_touch, -response_gift)
+
 
 #Per ID Summary
 id_summary<- ira_adj%>%
