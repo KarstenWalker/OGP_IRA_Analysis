@@ -344,8 +344,8 @@ ira_mailings_response<- ira_mailings%>%
   bind_rows((ira_adj%>%
                select(id, trans_date, ira_gift)%>%
                group_by(id)%>%
-               mutate(type=if_else(ira_gift==1, "ira_gift", "non_ira_gift")
-                      )%>%
+               filter(ira_gift==1)%>%
+               mutate(type=ifelse(ira_gift==1, paste("ira_gift"),0))%>%
                select(-ira_gift)%>%
                rename(date=trans_date)%>%
                filter(date>"2011-09-21")
@@ -353,22 +353,24 @@ ira_mailings_response<- ira_mailings%>%
             )%>%
   group_by(id)%>%
   arrange(date)%>%
-  mutate(response=ifelse(type%in% c("ira_gift", "non_ira_gift") &
-                           lag(type)%in% c("postcard", "html", "letter"),1,0),
-         response_type=ifelse(response==1, paste(type), "0")
-         )%>%
-  left_join((ira_adj%>%select(id, trans_date, adj_amt)%>%rename(date=trans_date)), by=c("id","date")
+  mutate(response=ifelse(type=="ira_gift",1,0))%>%
+  left_join((ira_adj%>%
+               group_by(id)%>%
+               ungroup()%>%
+               filter(ira_gift==1)%>%
+               select(id, trans_date, adj_ira_amt)%>%
+               rename(date=trans_date)), by=c("id","date")
             )%>%
   group_by(id)%>%
-  filter(response_type !="non_ira_gift")%>%
   arrange(date)%>%
-  mutate(response_time=as.numeric(ifelse(
-    response==1, paste0(
+  mutate(response_time=as.numeric(
+    paste0(
       as.numeric(
         difftime(
           date, lag(date), units="days")
         )
-      ), NA)),
+      )
+    ),
     respondent=ifelse(sum(response)>=1,1,0)
     )
 
@@ -376,14 +378,13 @@ ira_responses<-ira_mailings_response%>%
   group_by(id)%>%
   filter(respondent==1)%>%
   group_by(id, date, type)%>%
-  summarize(amt=sum(adj_amt),
+  summarize(date_amt=sum(adj_ira_amt),
             response_time=sum(response_time, na.rm = TRUE))%>%
   ungroup()%>%
   group_by(id)%>%
   arrange(date)%>%
-  filter(type!="non_ira_gift")%>%
-  mutate(response_touch=ifelse(is.na(amt)& !is.na(lead(amt)),1,0),
-         response_gift=ifelse(lag(response_touch)==1 & !is.na(amt), 1,0),
+  mutate(response_touch=ifelse(is.na(date_amt)& !is.na(lead(date_amt)),1,0),
+         response_gift=ifelse(lag(response_touch)==1 & !is.na(date_amt), 1,0),
          response_pair=ifelse(response_touch==1 & lead(response_gift)==1 |
            response_gift==1 & lag(response_touch==1),1,0))%>%
   filter(response_pair==1)%>%
