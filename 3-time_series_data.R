@@ -122,7 +122,7 @@ autoplot(acf(ira_logymts_dif, lag.max=20))+ theme_clean()
 #Creates time series formatted data.frames
 ira_ymts_num_gift_tsdf <- tsdf(ira_ymts_num_gift)
 ira_ymts_trans_tsdf <- tsdf(ira_ymts_trans)
-ira_ymts_ira_tsdf <- tsdf(ira_ymts_ira)
+ira_ymts_ira_tsdf <- tsdf(ira_ymts_num_ira_gifts)
 
 #Visualize decompositions
 ##Non-transformed 
@@ -165,7 +165,7 @@ ira_ymts_num_gift_decompose <- fortify(stats::decompose(ira_ymts_num_gift)) %>%
   rename(raw=Data, date=Index, irregular=remainder)%>%
   melt(id.vars="date")
 
-ira_ymts_ira_decompose <- fortify(stats::decompose(ira_ymts_ira)) %>%
+ira_ymts_ira_decompose <- fortify(stats::decompose(ira_ymts_num_ira_gifts)) %>%
   rename(raw=Data, date=Index, irregular=remainder)%>%
   melt(id.vars="date")
 #For plotting can add on gather() to make long format
@@ -173,7 +173,7 @@ ira_ymts_num_gift_decompose_long <- fortify(stats::decompose(ira_ymts_num_gift))
   rename(date=Index, raw=Data,irregular=remainder)%>%
  gather(date)
 
-ira_ymts_ira_decompose_long <- fortify(stats::decompose(ira_ymts_ira)) %>%
+ira_ymts_ira_decompose_long <- fortify(stats::decompose(ira_ymts_num_ira_gifts)) %>%
   rename(date=Index, raw=Data,irregular=remainder)%>%
   gather(date)
 
@@ -193,10 +193,10 @@ ira_num_gift_seasonal <- fortify(stats::decompose(ira_ymts_num_gift)) %>%
   group_by(date) %>%
   mutate(adjusted=raw-seasonal) %>%
   select(date, raw, adjusted) %>%
-  mutate(source=as.character(ifelse(!is.na(adjusted), "num", "num"))) %>%
-  melt(id.vars=c("date","source"))
+  mutate(type=as.character(ifelse(!is.na(adjusted), "num", "num"))) %>%
+  melt(id.vars=c("date","type"))
 
-ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_ira)) %>%
+ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_num_ira_gifts)) %>%
   ungroup()%>%
   rename(date=Index, raw=Data, irregular=remainder)%>%
   mutate(adjusted=raw-seasonal) %>%
@@ -204,15 +204,15 @@ ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_ira)) %>%
   gather(date, data, raw:adjusted)
 
 #Use this for plotting
-ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_ira)) %>%
+ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_num_ira_gifts)) %>%
   rename(date=Index, raw=Data, irregular=remainder)%>%
   melt(id.vars="date") %>%
   dcast(date~ variable, value.var="value") %>%
   group_by(date) %>%
   mutate(adjusted=raw-seasonal) %>%
   select(date, raw, adjusted) %>%
-  mutate(source=as.character(ifelse(!is.na(adjusted), "ira", "ira"))) %>%
-  melt(id.vars=c("date","source"))
+  mutate(type=as.character(ifelse(!is.na(adjusted), "ira", "ira"))) %>%
+  melt(id.vars=c("date","type"))
 
 #Combine both datasets into one data frame to plot on the same plot
 #By selecting source as the color in aes, and setting y to value you can easily plot
@@ -221,7 +221,9 @@ ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_ira)) %>%
 ira_adjusted<- ira_num_gift_seasonal%>%
   bind_rows(ira_seasonal_ira)
   
-  
+ira_adjusted$type<- gsub("num", "Non-IRA", ira_adjusted$type)
+ira_adjusted$type<- gsub("ira", "IRA", ira_adjusted$type)
+
 ######Seasonal adjustment using X-13Arima-SEATS.  Works optimally in most
 #circumstances.  DO NOT START WITH A POWER-TRANSFORMED TS.  The package automatically
 #runs an AIC test and picks the transformation.
@@ -229,7 +231,7 @@ ira_adjusted<- ira_num_gift_seasonal%>%
 #Start with our differenced total
 ira_num_gift_x13 <- seas(ira_ymts_num_gift)
 
-ira_x13_num_ira_gifts <- seas(ira_ymts_ira)
+ira_x13_num_ira_gifts <- seas(ira_ymts_num_ira_gifts)
 
 #Launches GUI to inspect and tweak x13 values
 inspect(ira_num_gift_x13)
