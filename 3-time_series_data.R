@@ -185,7 +185,7 @@ ira_num_gift_seasonal <- fortify(stats::decompose(ira_ymts_num_gift)) %>%
   select(date, raw, adjusted) %>%
   gather(date, raw:adjusted)
 
-#Use this for plotting
+#FOR PLOTTING
 ira_num_gift_seasonal <- fortify(stats::decompose(ira_ymts_num_gift)) %>%
   rename(date=Index, raw=Data, irregular=remainder)%>%
   melt(id.vars="date") %>%
@@ -203,7 +203,7 @@ ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_num_ira_gifts)) %>%
   select(date, raw, adjusted) %>%
   gather(date, data, raw:adjusted)
 
-#Use this for plotting
+#FOR PLOTTING
 ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_num_ira_gifts)) %>%
   rename(date=Index, raw=Data, irregular=remainder)%>%
   melt(id.vars="date") %>%
