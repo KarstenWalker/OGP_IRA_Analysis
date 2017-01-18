@@ -353,7 +353,9 @@ ira_mailings_response<- ira_mailings%>%
             )%>%
   group_by(id)%>%
   arrange(date)%>%
-  mutate(response=ifelse(type=="ira_gift",1,0))%>%
+  mutate(response=ifelse(type=="ira_gift",1,0),
+         respondent=ifelse(sum(response)>=1,1,0))%>%
+  filter(respondent==1)%>%
   left_join((ira_adj%>%
                group_by(id)%>%
                ungroup()%>%
@@ -364,19 +366,18 @@ ira_mailings_response<- ira_mailings%>%
   group_by(id)%>%
   arrange(date)%>%
   mutate(response_time=as.numeric(
-    paste0(
-      as.numeric(
-        difftime(
-          date, lag(date), units="days")
-        )
-      )
-    ),
-    respondent=ifelse(sum(response)>=1,1,0)
+    ifelse(
+      response==1, paste0(
+        as.numeric(
+          difftime(
+            date, lag(date), units="days")
+          )
+        ), NA)
+    )
     )
 
 ira_responses<-ira_mailings_response%>%
   group_by(id)%>%
-  filter(respondent==1)%>%
   group_by(id, date, type)%>%
   summarize(date_amt=sum(adj_ira_amt),
             response_time=sum(response_time, na.rm = TRUE))%>%
@@ -409,6 +410,7 @@ ira_yearmon<-ira_adj%>%
   ungroup()%>%
   filter(norm_outlier_score<.020)%>%
   filter(decile!="Top" | decile !="10")%>%
+  filter(adj_amt<=1000000)%>%
   group_by(yearmon)%>%
   summarize(num_donors=n_distinct(id),
             num_ira_donors=sum(ifelse(row_number(id)==1 & num_ira_gifts>=1,1,0)),
@@ -421,6 +423,7 @@ ira_yearmon<-ira_adj%>%
             total_ira_giving=sum(ira_amt),
             mean_amt=mean(amt),
             mean_adj_amt=mean(adj_amt),
+            mean_ira_amt=mean(adj_ira_amt),
             average_amt=total_giving/num_donors,
             average_adj_amt=total_adj_giving/num_donors,
             median_amt=median(amt),
