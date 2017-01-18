@@ -63,6 +63,22 @@ ggplot()+
         plot.title=element_text(face = "bold", size= 12),
         legend.background =element_rect(fill="transparent", colour=NA))
 
+#Same plot, but using trend component only
+ggplot()+
+  geom_line(data=(ira_adjusted%>%
+                    filter(variable=="trend")),
+            aes(x=date, y=value, colour=type), size=1)+
+  geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+  ggtitle("IRA Giving Follows and Supplements Giving Trends")+
+  scale_x_date()+
+  xlab("Date")+
+  ylab("Average Number of Gifts")+
+  theme_clean()+
+  theme(axis.text = element_text(size = 8),
+        axis.title=element_text(face="bold", size= 10),
+        plot.title=element_text(face = "bold", size= 12),
+        legend.position = "none")
+
 #Response to marketing
 ggplot(ira_responses%>%
          ungroup()%>%
@@ -124,3 +140,35 @@ ggplot()+
         axis.title=element_text(face="bold", size= 10),
         plot.title=element_text(face = "bold", size= 12),
         legend.background =element_rect(fill="transparent", colour=NA))
+
+#Seasonally adjusted mean amt
+ggplot()+
+  geom_line(data=(ira_adjusted_mean%>%
+                    filter(variable=="raw")),
+            aes(x=date, y=value, colour=type), size=1)+
+    geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+    ggtitle("IRA Giving Follows and Supplements Giving Trends")+
+    scale_x_date()+
+  xlab("Date")+
+  ylab("Average Gift Amount")+
+  theme_clean()+
+  theme(axis.text = element_text(size = 8),
+        axis.title=element_text(face="bold", size= 10),
+        plot.title=element_text(face = "bold", size= 12),
+        legend.position = "none")
+
+#Seasonally adjusted using just the trend lines
+ggplot()+
+  geom_line(data=(ira_adjusted_mean%>%
+                    filter(variable=="trend")),
+            aes(x=date, y=value, colour=type), size=1)+
+  geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+  ggtitle("IRA Giving Follows and Supplements Giving Trends")+
+  scale_x_date()+
+  xlab("Date")+
+  ylab("Average Gift Amount")+
+  theme_clean()+
+  theme(axis.text = element_text(size = 8),
+        axis.title=element_text(face="bold", size= 10),
+        plot.title=element_text(face = "bold", size= 12),
+        legend.position = "none")
