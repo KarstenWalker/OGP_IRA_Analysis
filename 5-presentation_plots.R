@@ -83,6 +83,10 @@ ggplot(ira_responses%>%
 #Reponse to marketing line graph
 #Response to marketing
 ggplot()+
+  geom_line(data=(ira_adjusted%>%
+                    filter(variable=="raw"&
+                             date>="2011-09-21")),
+            aes(x=date, y=value, colour=type), size=1)+
   geom_line(data=(ira_responses%>%
               ungroup()%>%
               filter(type == "ira_gift")%>%
@@ -90,6 +94,7 @@ ggplot()+
               summarize(responses=n())), aes(x=date, y=responses))+
   geom_vline(data=ira_mailings_summary, aes(xintercept = as.numeric(date), colour="green"))+
   xlab("Date")+
+
   ylab("Number of IRA Gifts")+
   ggtitle("Number of IRA Gifts That Directly Follow Outreach")+
   theme_clean()+
@@ -97,3 +102,25 @@ ggplot()+
         axis.title=element_text(face="bold", size= 10),
         plot.title=element_text(face = "bold", size= 12),
         legend.position = "none")
+
+#Average gift amount and year for both types of gifts.  Can duplicate plot and use other
+#y axis metric to differentiate.
+ggplot()+
+  geom_line(data=(ira_yearmon%>%
+                    select(yearmon, mean_adj_amt, mean_ira_amt)%>%
+                    group_by(yearmon)%>%
+                    melt(id.vars=c("yearmon"))%>%
+                    ungroup()%>%
+                    filter(value>0)),
+            aes(x=yearmon, y=value, colour=variable), size=1)+
+  geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+  ggtitle("IRA Giving Follows and Supplements Giving Trends")+
+  scale_x_date()+
+  scale_colour_discrete(name="Gift Type")+
+  xlab("Year")+
+  ylab("Average Gift Amount")+
+  theme_clean()+
+  theme(axis.text = element_text(size = 8),
+        axis.title=element_text(face="bold", size= 10),
+        plot.title=element_text(face = "bold", size= 12),
+        legend.background =element_rect(fill="transparent", colour=NA))
