@@ -172,3 +172,62 @@ ggplot()+
         axis.title=element_text(face="bold", size= 10),
         plot.title=element_text(face = "bold", size= 12),
         legend.position = "none")
+
+#Change in mean amount
+ggplot()+
+  geom_line(data=(ira_yearmon%>%
+                    select(yearmon, mean_amt_change, mean_ira_amt_change)%>%
+                    group_by(yearmon)%>%
+                    melt(id.vars=c("yearmon"))),
+            aes(x=yearmon, y=value, colour=variable), size=1)+
+  geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+  ggtitle("IRA Giving Follows and Supplements Giving Trends")+
+  scale_x_date()+
+  scale_colour_discrete(name="Gift Type")+
+  xlab("Year")+
+  ylab("Average Gift Amount")+
+  theme_clean()+
+  theme(axis.text = element_text(size = 8),
+        axis.title=element_text(face="bold", size= 10),
+        plot.title=element_text(face = "bold", size= 12),
+        legend.background =element_rect(fill="transparent", colour=NA))
+
+#PCT change in mean amount
+ggplot()+
+  geom_line(data=(ira_yearmon%>%
+                    select(yearmon, pct_mean_change, pct_ira_mean_change)%>%
+                    group_by(yearmon)%>%
+                    melt(id.vars=c("yearmon"))),
+            aes(x=yearmon, y=value, colour=variable), size=1)+
+  geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+  ggtitle("IRA Giving Follows and Supplements Giving Trends")+
+  scale_x_date()+
+  scale_colour_discrete(name="Gift Type")+
+  xlab("Year")+
+  ylab("Average Gift Amount")+
+  theme_clean()+
+  theme(axis.text = element_text(size = 8),
+        axis.title=element_text(face="bold", size= 10),
+        plot.title=element_text(face = "bold", size= 12),
+        legend.background =element_rect(fill="transparent", colour=NA))
+
+ggplot()+
+  geom_line(data=(ira_yearmon%>%
+                    select(yearmon, mean_amt, mean_ira_amt)%>%
+                    group_by(yearmon)%>%
+                    melt(id.vars=c("yearmon"))%>%
+                    ungroup()%>%
+                    filter(value>0)),
+            aes(x=yearmon, y=value, colour=variable), size=1)+
+  geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+  ggtitle("IRA Giving Follows and Supplements Giving Trends")+
+  scale_x_date()+
+  scale_y_log10()
+  scale_colour_discrete(name="Gift Type")+
+  xlab("Year")+
+  ylab("Average Gift Amount")+
+  theme_clean()+
+  theme(axis.text = element_text(size = 8),
+        axis.title=element_text(face="bold", size= 10),
+        plot.title=element_text(face = "bold", size= 12),
+        legend.background =element_rect(fill="transparent", colour=NA))

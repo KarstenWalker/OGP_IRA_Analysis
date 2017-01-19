@@ -192,7 +192,7 @@ ira_num_gift_seasonal <- fortify(stats::decompose(ira_ymts_num_gift)) %>%
   dcast(date~ variable, value.var="value") %>%
   group_by(date) %>%
   mutate(adjusted=raw-seasonal) %>%
-  select(date, raw, adjusted) %>%
+  select(date, raw, trend, adjusted) %>%
   mutate(type=as.character(ifelse(!is.na(adjusted), "num", "num"))) %>%
   melt(id.vars=c("date","type"))
 
@@ -210,7 +210,7 @@ ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_num_ira_gifts)) %>%
   dcast(date~ variable, value.var="value") %>%
   group_by(date) %>%
   mutate(adjusted=raw-seasonal) %>%
-  select(date, raw, adjusted) %>%
+  select(date, raw, trend, adjusted) %>%
   mutate(type=as.character(ifelse(!is.na(adjusted), "ira", "ira"))) %>%
   melt(id.vars=c("date","type"))
 
@@ -281,3 +281,43 @@ ira_auto_forecast_num_gift <- forecast.Arima(ira_auto_arima_num_gift, level = c(
 
 ira_auto_arima_num_ira_gifts<- auto.arima(ira_ymts_num_ira_gifts)
 ira_auto_forecast_num_ira_gifts <- forecast.Arima(ira_auto_arima_num_ira_gifts, level = c(85), h = 60)
+
+#####Plots for mean amounts#####
+ira_ymts_mean_df <- ira_yearmon %>%
+  select(yearmon, mean_adj_amt)
+
+ira_ymts_ira_mean_df <- ira_yearmon %>%
+  select(yearmon, mean_ira_amt)%>%
+  filter(yearmon>="2006-01-01")
+
+ira_ymts_mean <- ira_ymts_mean_df$mean_adj_amt
+ira_ymts_mean <-ts(ira_ymts_mean, frequency=12, start=c(1997, 1))
+
+ira_ymts_ira_mean <- ira_ymts_ira_mean_df$mean_ira_amt
+ira_ymts_ira_mean <-ts(ira_ymts_ira_mean, frequency=12, start=c(2006, 1))
+
+ira_mean_seasonal <- fortify(stats::decompose(ira_ymts_mean)) %>%
+  rename(date=Index, raw=Data, irregular=remainder)%>%
+  melt(id.vars="date") %>%
+  dcast(date~ variable, value.var="value") %>%
+  group_by(date) %>%
+  mutate(adjusted=raw-seasonal) %>%
+  select(date, raw,trend, adjusted) %>%
+  mutate(type=as.character(ifelse(!is.na(adjusted), "num", "num"))) %>%
+  melt(id.vars=c("date","type"))
+
+ira_ira_mean_seasonal <- fortify(stats::decompose(ira_ymts_ira_mean)) %>%
+  rename(date=Index, raw=Data, irregular=remainder)%>%
+  melt(id.vars="date") %>%
+  dcast(date~ variable, value.var="value") %>%
+  group_by(date) %>%
+  mutate(adjusted=raw-seasonal) %>%
+  select(date, raw, trend, adjusted) %>%
+  mutate(type=as.character(ifelse(!is.na(adjusted), "ira", "ira"))) %>%
+  melt(id.vars=c("date","type"))
+
+ira_adjusted_mean<- ira_mean_seasonal%>%
+  bind_rows(ira_ira_mean_seasonal)
+
+ira_adjusted_mean$type<- gsub("num", "Non-IRA", ira_adjusted_mean$type)
+ira_adjusted_mean$type<- gsub("ira", "IRA", ira_adjusted_mean$type)
