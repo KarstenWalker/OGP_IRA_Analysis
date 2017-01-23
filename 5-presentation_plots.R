@@ -61,7 +61,16 @@ ggplot()+
   theme(axis.text = element_text(size = 8),
         axis.title=element_text(face="bold", size= 10),
         plot.title=element_text(face = "bold", size= 12),
-        legend.background =element_rect(fill="transparent", colour=NA))
+        legend.background =element_rect(fill="transparent", colour=NA))+
+  geom_smooth(
+    data=(ira_adjusted%>%filter(date<"2006-01-01")%>%
+            filter(variable=="raw")),
+    aes(x=date, y=value, colour=type), size=1,se=FALSE)+
+  geom_smooth(
+    data=(ira_adjusted%>%filter(date>="2006-01-01")%>%
+            filter(variable=="raw")),
+    aes(x=date, y=value, colour=type), size=1,se=FALSE)
+
 
 #Same plot, but using trend component only
 ggplot()+
@@ -77,7 +86,15 @@ ggplot()+
   theme(axis.text = element_text(size = 8),
         axis.title=element_text(face="bold", size= 10),
         plot.title=element_text(face = "bold", size= 12),
-        legend.position = "none")
+        legend.position = "none")+
+  geom_smooth(
+    data=(ira_adjusted%>%filter(date<"2006-01-01")%>%
+            filter(variable=="trend")),
+    aes(x=date, y=value, colour=type), size=1,se=FALSE)+
+  geom_smooth(
+    data=(ira_adjusted%>%filter(date>="2006-01-01")%>%
+            filter(variable=="trend")),
+    aes(x=date, y=value, colour=type), size=1,se=FALSE)
 
 #Response to marketing
 ggplot(ira_responses%>%
@@ -95,6 +112,26 @@ ggplot(ira_responses%>%
         axis.title=element_text(face="bold", size= 10),
         plot.title=element_text(face = "bold", size= 12),
         legend.position = "none")
+
+
+ggplot(ira_responses%>%
+         mutate(year=format(as.Date(date, format="%Y-%m-%d"),"%Y"))%>%
+         ungroup()%>%
+         filter(type != "ira_gift")%>%
+         group_by(year,type)%>%
+         summarize(responses=n())
+)+
+  geom_bar(aes(x=year, y=responses, fill=type), stat="identity",position="fill",show.legend =TRUE)+
+  xlab("Year")+
+  ylab("Proportion of IRA Gifts")+
+  ggtitle("Number of IRA Gifts That Directly Follow Outreach")+
+  theme_clean()+
+  theme(axis.text = element_text(size = 8),
+        axis.title=element_text(face="bold", size= 10),
+        plot.title=element_text(face = "bold", size= 12),
+        legend.position = "none")
+
+
 
 #Reponse to marketing line graph
 #Response to marketing
@@ -141,7 +178,7 @@ ggplot()+
         plot.title=element_text(face = "bold", size= 12),
         legend.background =element_rect(fill="transparent", colour=NA))
 
-#Seasonally adjusted mean amt
+#Seasonally adjusted mean amt  
 ggplot()+
   geom_line(data=(ira_adjusted_mean%>%
                     filter(variable=="raw")),
@@ -157,12 +194,24 @@ ggplot()+
         plot.title=element_text(face = "bold", size= 12),
         legend.position = "none")
 
-#Seasonally adjusted using just the trend lines
+#Seasonally adjusted using just the trend lines  FINAl Plot
 ggplot()+
   geom_line(data=(ira_adjusted_mean%>%
                     filter(variable=="trend")),
             aes(x=date, y=value, colour=type), size=1)+
   geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+  geom_smooth(
+    data=(ira_adjusted_mean%>%
+            filter(date>="2006-01-01")%>%
+            filter(variable=="trend")),
+    aes(x=date, y=value, colour=type), size=1,se=FALSE
+  )+
+  geom_smooth(
+    data=(ira_adjusted_mean%>%
+            filter(date<"2006-01-01")%>%
+            filter(variable=="trend")),
+    aes(x=date, y=value, colour=type), size=1,se=FALSE
+  )+
   ggtitle("IRA Giving Follows and Supplements Giving Trends")+
   scale_x_date()+
   xlab("Date")+
@@ -211,18 +260,32 @@ ggplot()+
         plot.title=element_text(face = "bold", size= 12),
         legend.background =element_rect(fill="transparent", colour=NA))
 
-ggplot()+
-  geom_line(data=(ira_yearmon%>%
-                    select(yearmon, mean_amt, mean_ira_amt)%>%
-                    group_by(yearmon)%>%
-                    melt(id.vars=c("yearmon"))%>%
-                    ungroup()%>%
-                    filter(value>0)),
-            aes(x=yearmon, y=value, colour=variable), size=1)+
-  geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+ggplot(data=(ira_yearmon%>%
+               select(yearmon, mean_amt, mean_ira_amt)%>%
+               group_by(yearmon)%>%
+               melt(id.vars=c("yearmon"))%>%
+               ungroup()%>%
+               filter(value>0)))+
+  geom_line(aes(x=yearmon, y=value, colour=variable), size=1)+
   ggtitle("IRA Giving Follows and Supplements Giving Trends")+
+  geom_smooth(data=(ira_yearmon%>%
+                      filter(yearmon>="2006-01-01")%>%
+                      select(yearmon, mean_amt, mean_ira_amt)%>%
+                      group_by(yearmon)%>%
+                      melt(id.vars=c("yearmon"))%>%
+                      ungroup()%>%
+                      filter(value>0)),
+    aes(x=yearmon, y=value, colour=variable), size=1, se=FALSE)+
+  geom_smooth(data=(ira_yearmon%>%
+                      filter(yearmon<"2006-01-01")%>%
+                      select(yearmon, mean_amt, mean_ira_amt)%>%
+                      group_by(yearmon)%>%
+                      melt(id.vars=c("yearmon"))%>%
+                      ungroup()%>%
+                      filter(value>0)),
+              aes(x=yearmon, y=value, colour=variable), size=1, se=FALSE)+
+  geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
   scale_x_date()+
-  scale_y_log10()
   scale_colour_discrete(name="Gift Type")+
   xlab("Year")+
   ylab("Average Gift Amount")+

@@ -321,3 +321,4 @@ ira_adjusted_mean<- ira_mean_seasonal%>%
 
 ira_adjusted_mean$type<- gsub("num", "Non-IRA", ira_adjusted_mean$type)
 ira_adjusted_mean$type<- gsub("ira", "IRA", ira_adjusted_mean$type)
+ira_adjusted_mean<- ira_adjusted_mean%>%filter(date<=Sys.Date())
