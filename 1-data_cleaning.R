@@ -16,15 +16,15 @@ date <-as.Date(Sys.Date())
 #summary tables i.e. if you want number of IRA gifts by month, use the ira_yearmon table as your basis.
 
 #Read in .csv
-ira_data<- read.csv("R:/AIM/Advanced Analytics/OGP_IRA/ira_data.csv",
-                header=TRUE,
-                stringsAsFactors=FALSE
+ira_data<- read.csv("R:/AIM/Advanced Analytics/OGP_IRA/ira_new.csv",
+                    header=TRUE,
+                    stringsAsFactors=FALSE
 )
 
 #Read in mailing data
 ira_mailings<- read.csv("R:/AIM/Advanced Analytics/OGP_IRA/mailing_list.csv",
-                    header=TRUE,
-                    stringsAsFactors=FALSE
+                        header=TRUE,
+                        stringsAsFactors=FALSE
 )
 
 names(ira_mailings)<- tolower(names(ira_mailings))
@@ -32,7 +32,8 @@ names(ira_mailings)<- tolower(names(ira_mailings))
 ira_mailings<-ira_mailings%>%
   rename(touch=marketing.touch.name,
          date=marketing.touch.date,
-         id=cadsid)
+         id=cadsid)%>%
+  mutate(touch=gsub(" ", "\n",touch))
 
 ira_mailings$type<-tolower(ira_mailings$type)
 ira_mailings$touch<- tolower(ira_mailings$touch)
@@ -58,26 +59,27 @@ ira_mailings_summary<- ira_mailings%>%
 student_support <- c("GSS", "BSS", "USS")
 
 ira_data$prim_purp <- replace(ira_data$prim_purp, 
-                                 ira_data$prim_purp %in% student_support,
-                                 "STU")
+                              ira_data$prim_purp %in% student_support,
+                              "STU")
 
 dept_support <- c("CHR", "LIB", "UNR", "UNU")
 
 ira_data$prim_purp <- replace(ira_data$prim_purp, 
-                                 ira_data$prim_purp %in% dept_support,
-                                 "DEP")
+                              ira_data$prim_purp %in% dept_support,
+                              "DEP")
 
 other_purp <- c("PND", "DRC", "NIS", "MUL")
 
 ira_data$prim_purp <- replace(ira_data$prim_purp, 
-                                 ira_data$prim_purp %in% other_purp,
-                                 "OTH")
+                              ira_data$prim_purp %in% other_purp,
+                              "OTH")
 
 #Load inflation adjustment functions
 source("R:/AIM/Advanced Analytics/Functions/inflation_functions.r")
 lookup<- inflation_lookup(2016)
 adjust2016<- inflation_adjuster(2016)
 
+#Campaign Dates
 #Campaign Dates
 start <- as.Date(c("1986-07-01", "1996-07-01", "2005-07-01"))
 end <- as.Date(c("1990-07-01", "2000-12-31", "2013-12-31"))
@@ -92,8 +94,8 @@ dates<- as.Date(c("2016-07-29", "2016-09-06", "2016-11-28",
                   "2010-01-04"))
 
 appeals<- as.character(c("Donor Letter", "Postcard", "HTML", 
-                          "HTML", "Postcard", "HTML", "Donor Letter", 
-                          "Postcard", "Letter", "Postcard"))
+                         "HTML", "Postcard", "HTML", "Donor Letter", 
+                         "Postcard", "Letter", "Postcard"))
 
 num_appeals<- as.numeric(c(150, 40000, 40000,
                            570, 25000, 9523,
@@ -111,7 +113,7 @@ ira_adj <- ira_data %>%
   mutate(age_birth=as.numeric((difftime((as.Date(Sys.Date())), birth_date, units="weeks"))/52),
          years_since_death=as.numeric((difftime((as.Date(Sys.Date())), death_date, units="weeks"))/52),
          years_since_death=ifelse(is.na(years_since_death),0,years_since_death),
-         age_cc=2016-class_year+23)%>%
+         age_cc=2017-class_year+23)%>%
   ungroup()%>%
   mutate(yeardate=floor_date(trans_date, unit="year"),
          yearmon=floor_date(trans_date, unit="month"))%>%
@@ -126,6 +128,7 @@ ira_adj <- ira_data %>%
          ira_eligible=ifelse(trans_age_birth >=70.5,1,0),
          first_trans_date=first(trans_date),
          gift_num=as.numeric(row_number()),
+         num_gift=1,
          num_ira_gifts=sum(ira_gift),
          ira_donor=as.factor(ifelse(sum(ira_gift)>=1,1,0)),
          first_ira=ira_gift==1 & !duplicated(ira_gift==1),
@@ -147,6 +150,10 @@ ira_adj <- ira_data %>%
          adj_ira_total=replace(adj_ira_total, which(adj_ira_total==0),max(adj_ira_total)),
          mean_ira_amt=mean(ira_amt),
          adj_total_giving=sum(adj_amt),
+         adj_non_ira_giving=adj_total_giving-adj_ira_total,
+         non_ira_amt=amt-ira_amt,
+         adj_non_ira_amt=adj_amt-adj_ira_amt,
+         non_ira_giving=total_giving-ira_total,
          adj_total_roll=cumsum(adj_amt),
          adj_total_giving_change=adj_total_roll-lag(adj_total_roll),
          amt_change=adj_amt-lag(adj_amt),
@@ -156,6 +163,7 @@ ira_adj <- ira_data %>%
          median_amt=median(amt),
          max_amt=max(adj_amt),
          num_gifts= n(),
+         num_non_ira_gifts=num_gift-ira_gift,
          repeat_ira_donor=ifelse(num_ira_gifts>1, 1, 0),
          first_amt=first(adj_amt),
          last_amt=last(adj_amt),
@@ -247,25 +255,25 @@ ira_adj<-ira_adj%>%
                                  ifelse(age>=70.5 & age<75, "70.5-75",
                                         ifelse(age>=75 & age<80, "75-80",
                                                ifelse(age>=80 & age<85, "80-85", "85+")
-                                 ))))%>%
-           mutate(trans_bin=ntile(age, 8),
-                  trans_rank=percent_rank(age),
-                  cume_rank=cume_dist(age))
-  
+                                        ))))%>%
+  mutate(trans_bin=ntile(age, 8),
+         trans_rank=percent_rank(age),
+         cume_rank=cume_dist(age))
+
 #Add deciles based on dataset and deciles for ira gifts
 ira_adj<-ira_adj%>%
   mutate(decile= with(ira_adj, factor(findInterval(adj_total_giving, 
-                                                      c(-Inf,
-                                                        quantile(adj_total_giving,c(.1, .2, .3, .4, .5, .6, .7, .8, .9, .995)),Inf)),
-                                         labels=c("1","2","3","4","5", "6", "7", "8", "9", "10", "Top"))))
+                                                   c(-Inf,
+                                                     quantile(adj_total_giving,c(.1, .2, .3, .4, .5, .6, .7, .8, .9, .995)),Inf)),
+                                      labels=c("1","2","3","4","5", "6", "7", "8", "9", "10", "Top"))))
 
 ira_deciles<-ira_adj%>%
   ungroup()%>%
   filter(ira_donor==1)%>%
   mutate(ira_decile= with(ira_adj, factor(findInterval(adj_ira_total, 
-                                                        c(-Inf,
-                                                          quantile(adj_ira_total,c(.1, .2, .3, .4, .5, .6, .7, .8, .9, .995)),Inf)),
-                                           labels=c("1","2","3","4","5", "6", "7", "8", "9", "10", "Top"))))%>%
+                                                       c(-Inf,
+                                                         quantile(adj_ira_total,c(.1, .2, .3, .4, .5, .6, .7, .8, .9, .995)),Inf)),
+                                          labels=c("1","2","3","4","5", "6", "7", "8", "9", "10", "Top"))))%>%
   select(id, ira_decile)
 
 ira_adj<-ira_adj%>%
@@ -293,9 +301,9 @@ deciles<-deciles%>%rename(CADS_decile=decile)
 ira_adj<-ira_adj%>%
   left_join(deciles, by="id")%>%
   mutate(group = ifelse(decile == "1" | decile == "2" |
-                         decile == "3" | decile == "4", "Small", 
-                       ifelse(decile == "5" | decile == "6" | decile == "7" |
-                                decile == "8", "Medium", "Large")))
+                          decile == "3" | decile == "4", "Small", 
+                        ifelse(decile == "5" | decile == "6" | decile == "7" |
+                                 decile == "8", "Medium", "Large")))
 
 rm(list='deciles')
 
@@ -305,11 +313,11 @@ pre_law<- ira_adj%>%
   select(id, adj_amt, larger_gift, time_between, mean_amt_change)%>%
   group_by(id)%>%
   summarize(pre_law_mean_amt=mean(adj_amt),
-         pre_law_mean_var=mean(mean_amt_change),
-         pre_law_adj_total=sum(adj_amt),
-         max_pre_law=max(adj_amt),
-         pre_law_larger=sum(larger_gift, na.rm=TRUE),
-         pre_time_between=mean(time_between))%>%
+            pre_law_mean_var=mean(mean_amt_change),
+            pre_law_adj_total=sum(adj_amt),
+            max_pre_law=max(adj_amt),
+            pre_law_larger=sum(larger_gift, na.rm=TRUE),
+            pre_time_between=mean(time_between))%>%
   ungroup()
 
 #Post law
@@ -349,8 +357,8 @@ ira_mailings_response<- ira_mailings%>%
                select(-ira_gift)%>%
                rename(date=trans_date)%>%
                filter(date>"2011-09-21")
-             )
-            )%>%
+  )
+  )%>%
   group_by(id)%>%
   arrange(date)%>%
   mutate(response=ifelse(type=="ira_gift",1,0),
@@ -362,7 +370,7 @@ ira_mailings_response<- ira_mailings%>%
                filter(ira_gift==1)%>%
                select(id, trans_date, adj_ira_amt)%>%
                rename(date=trans_date)), by=c("id","date")
-            )%>%
+  )%>%
   group_by(id)%>%
   arrange(date)%>%
   mutate(response_time=as.numeric(
@@ -371,10 +379,10 @@ ira_mailings_response<- ira_mailings%>%
         as.numeric(
           difftime(
             date, lag(date), units="days")
-          )
-        ), NA)
-    )
-    )
+        )
+      ), NA)
+  )
+  )
 
 ira_responses<-ira_mailings_response%>%
   group_by(id)%>%
@@ -387,7 +395,7 @@ ira_responses<-ira_mailings_response%>%
   mutate(response_touch=ifelse(is.na(date_amt)& !is.na(lead(date_amt)),1,0),
          response_gift=ifelse(lag(response_touch)==1 & !is.na(date_amt), 1,0),
          response_pair=ifelse(response_touch==1 & lead(response_gift)==1 |
-           response_gift==1 & lag(response_touch==1),1,0))%>%
+                                response_gift==1 & lag(response_touch==1),1,0))%>%
   filter(response_pair==1)%>%
   select(-response_touch, -response_gift)
 
@@ -416,14 +424,22 @@ ira_yearmon<-ira_adj%>%
             num_ira_donors=sum(ifelse(row_number(id)==1 & num_ira_gifts>=1,1,0)),
             num_gifts= n(),
             num_ira_gifts=sum(ira_gift),
+            num_non_ira_gifts=num_gifts-num_ira_gifts,
             num_first_ira=sum(first_ira),
             num_eligible= sum(yearmon_eligible_flg),
             total_giving=sum(amt),
             total_adj_giving=sum(adj_amt),
-            total_ira_giving=sum(adj_ira_amt),
+            total_adj_non_ira_giving=sum(adj_non_ira_amt),
+            total_non_ira_giving=sum(non_ira_amt),
+            total_ira_giving=sum(ira_amt),
             mean_amt=mean(amt),
+            mean_gift_counts=mean(num_gifts),
+            mean_ira_gift_counts=mean(num_ira_gifts),
+            mean_non_ira_gift_counts=mean(num_gifts-num_ira_gifts),
             mean_adj_amt=mean(adj_amt),
-            mean_ira_amt=mean(adj_ira_amt),
+            mean_ira_amt=mean(ira_amt),
+            mean_non_ira_amt=mean(non_ira_amt),
+            mean_adj_non_ira_amt=mean(adj_non_ira_amt),
             average_amt=total_giving/num_donors,
             average_adj_amt=total_adj_giving/num_donors,
             median_amt=median(amt),
