@@ -20,16 +20,6 @@ library(shiny)
 #Load plotting theme
 source("R:/AIM/Advanced Analytics/Functions/theme_clean.r")
 
-#####Transformation Table#####
-# Lambda| Transformation equation
-# -2    |          1/y^2
-# -.5   |          1/((sqrt)y)
-# -1    |              1/y
-# 0     |          lognormal(ln)
-# .5    |          sqrt(y)
-# 1.0   |          y
-# 2.0   |          y^2
-
 #####Create time series data.frames#####
 ira_ymts_num_gift_df <- ira_yearmon %>%
   select(yearmon, num_gifts)
@@ -38,7 +28,6 @@ ira_ymts_num_ira_gifts_df <- ira_yearmon %>%
   select(yearmon, num_ira_gifts)%>%
   filter(yearmon>="2006-01-01")
 
-#Loy
 ira_ymts_num_non_ira_gifts_df <- ira_yearmon %>%
   select(yearmon, num_non_ira_gifts)
 
@@ -48,23 +37,10 @@ ira_ymts_num_gift <-ts(ira_ymts_num_gift, frequency=12, start=c(1995, 1))
 
 ira_ymts_num_ira_gifts<- ira_ymts_num_ira_gifts_df$num_ira_gifts
 ira_ymts_num_ira_gifts <-ts(ira_ymts_num_ira_gifts, frequency=12, start=c(2006, 1))
-#Loy
+
+
 ira_ymts_num_non_ira_gifts<- ira_ymts_num_non_ira_gifts_df$num_non_ira_gifts
 ira_ymts_num_non_ira_gifts <-ts(ira_ymts_num_non_ira_gifts, frequency=12, start=c(1995, 1))
-
-#####The following steps are necessary for determining the parameters of an
-#ARIMA model if you are not using the auto.arima selection feature from forecast
-#or the more robust and preferred x13-SEATS interface.  All steps for all methods shown below
-
-
-
-#This step returns the seasonally adjusted data
-ira_num_gift_seasonal <- fortify(stats::decompose(ira_ymts_num_gift)) %>%
-  ungroup()%>%
-  rename(date=Index, raw=Data, irregular=remainder)%>%
-  mutate(adjusted=raw-seasonal) %>%
-  select(date, raw, adjusted) %>%
-  gather(date, raw:adjusted)
 
 #FOR PLOTTING
 ira_num_gift_seasonal <- fortify(stats::decompose(ira_ymts_num_gift)) %>%
@@ -78,30 +54,14 @@ ira_num_gift_seasonal <- fortify(stats::decompose(ira_ymts_num_gift)) %>%
   melt(id.vars=c("date","type"))
 
 ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_num_ira_gifts)) %>%
-  ungroup()%>%
-  rename(date=Index, raw=Data, irregular=remainder)%>%
-  mutate(adjusted=raw-seasonal) %>%
-  select(date, raw, adjusted) %>%
-  gather(date, data, raw:adjusted)
-
-#FOR PLOTTING
-ira_seasonal_ira <- fortify(stats::decompose(ira_ymts_num_ira_gifts)) %>%
   rename(date=Index, raw=Data, irregular=remainder)%>%
   melt(id.vars="date") %>%
   dcast(date~ variable, value.var="value") %>%
   group_by(date) %>%
   mutate(adjusted=raw-seasonal) %>%
   select(date, raw, trend, adjusted) %>%
-  mutate(type=as.character(ifelse(!is.na(adjusted), "ira", "ira"))) %>%
+  mutate(type=as.character(ifelse(!is.na(adjusted), "IRA", "IRA"))) %>%
   melt(id.vars=c("date","type"))
-
-#FOR PLOTTING Loy
-ira_seasonal_non_ira <- fortify(stats::decompose(ira_ymts_num_non_ira_gifts)) %>%
-  ungroup()%>%
-  rename(date=Index, raw=Data, irregular=remainder)%>%
-  mutate(adjusted=raw-seasonal) %>%
-  select(date, raw, adjusted) %>%
-  gather(date, data, raw:adjusted)
 
 ira_seasonal_non_ira <- fortify(stats::decompose(ira_ymts_num_non_ira_gifts)) %>%
   rename(date=Index, raw=Data, irregular=remainder)%>%
@@ -110,10 +70,10 @@ ira_seasonal_non_ira <- fortify(stats::decompose(ira_ymts_num_non_ira_gifts)) %>
   group_by(date) %>%
   mutate(adjusted=raw-seasonal) %>%
   select(date, raw, trend, adjusted) %>%
-  mutate(type=as.character(ifelse(!is.na(adjusted), "non_ira", "non_ira"))) %>%
+  mutate(type=as.character(ifelse(!is.na(adjusted), "Non-IRA", "Non-IRA"))) %>%
   melt(id.vars=c("date","type"))
 
-#Combine both datasets into one data frame to plot on the same plot
+#Combine all datasets into one data frame to plot on the same plot
 #By selecting source as the color in aes, and setting y to value you can easily plot
 #both time series using geom_line
 

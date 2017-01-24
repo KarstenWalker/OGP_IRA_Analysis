@@ -32,7 +32,8 @@ names(ira_mailings)<- tolower(names(ira_mailings))
 ira_mailings<-ira_mailings%>%
   rename(touch=marketing.touch.name,
          date=marketing.touch.date,
-         id=cadsid)
+         id=cadsid)%>%
+  mutate(touch=gsub(" ", "\n",touch))
 
 ira_mailings$type<-tolower(ira_mailings$type)
 ira_mailings$touch<- tolower(ira_mailings$touch)
@@ -79,8 +80,9 @@ lookup<- inflation_lookup(2016)
 adjust2016<- inflation_adjuster(2016)
 
 #Campaign Dates
-start <- as.Date(c( "1996-07-01", "2005-07-01"))
-end <- as.Date(c("2000-12-31", "2013-12-31"))
+#Campaign Dates
+start <- as.Date(c("1986-07-01", "1996-07-01", "2005-07-01"))
+end <- as.Date(c("1990-07-01", "2000-12-31", "2013-12-31"))
 
 campaigndates<- data.frame(start=as.Date(start),
                            end=as.Date(end))

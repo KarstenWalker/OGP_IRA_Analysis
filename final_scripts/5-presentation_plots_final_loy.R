@@ -13,6 +13,18 @@ source("R:/AIM/Advanced Analytics/Functions/theme_clean.r")
 #Load legend move function
 source("R:/AIM/Advanced Analytics/Functions/legend_move.r")
 
+#Colorblind palatte
+pal_blind_type <- c("#E69F00", "#56B4E9", "#009E73")
+
+
+#Map to type
+types<-unlist(ira_adjusted%>%
+                group_by(type)%>%
+                summarize()%>%
+                select(type))
+
+names(pal_blind_type)<-types
+
 #Avg time between gifts by transaction age (current or age at death) by IRA vs Non-IRA
 #Uncomment last line to move legend onto the plot.  Sometimes works better for slides projected onto a big screen.
 ggplot(ira_adj%>%
@@ -35,18 +47,14 @@ ggplot(ira_adj%>%
   geom_smooth (aes(x=age,y=time_between,color=as.factor(ira_law)), se=FALSE)+
   ggtitle("Donors of All Ages Wait Longer Between Gifts,\n But Have a Larger Average Gift Amount After IRA LAW ")+
   theme_clean()+
-  theme(legend.position=c(.5, .92),
+  theme(legend.position="bottom",
         legend.direction = "horizontal",
         legend.box="horizontal",
         legend.key=element_rect(fill="white"),
-        axis.text = element_text(size = 8),
-        axis.title=element_text(face="bold", size= 10),
-        plot.title=element_text(face = "bold", size= 12),
+        axis.text = element_text(size = 12),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
         legend.background =element_rect(fill="transparent", colour=NA))
-
-
-
-
 
 #Raw IRA gift counts
 ggplot()+
@@ -54,19 +62,39 @@ ggplot()+
                     filter(variable=="raw")),
             aes(x=date, y=value, colour=type), size=1)+
   geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
-  geom_rect(data=campaigndates, 
-            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.1)+
+  geom_rect(data=campaigndates[2:3,], 
+            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.2)+
   ggtitle("Number of IRA Gifts over Time")+
   scale_x_date()+
   scale_colour_discrete(name="Gift Type")+
   xlab("Year")+
   ylab("Number of Gifts")+
   theme_clean()+
-  theme(axis.text = element_text(size = 8),
-        axis.title=element_text(face="bold", size= 10),
-        plot.title=element_text(face = "bold", size= 12),
-        legend.background =element_rect(fill="transparent", colour=NA))+
-  scale_color_manual(values=c( "#9999CC","#CC6666","Grey"))
+  theme(axis.text = element_text(size = 10),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
+        legend.key=element_rect(fill="white"),
+        legend.background =element_rect(fill="transparent", colour=NA))
+
+#EXAMPLE ABOVE WITH COLOR BLIND PALATTE
+ggplot()+
+  geom_line(data=(ira_adjusted%>%
+                    filter(variable=="raw")),
+            aes(x=date, y=value, colour=type), size=1)+
+  geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
+  geom_rect(data=campaigndates[2:3,], 
+            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.2)+
+  ggtitle("Number of IRA Gifts over Time")+
+  scale_x_date()+
+  scale_colour_manual(name="Gift Type", values=pal_blind_type)+
+  xlab("Year")+
+  ylab("Number of Gifts")+
+  theme_clean()+
+  theme(axis.text = element_text(size = 10),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
+        legend.key=element_rect(fill="white"),
+        legend.background =element_rect(fill="transparent", colour=NA))
 
 #Add smooth lines
 ggplot()+
@@ -74,17 +102,18 @@ ggplot()+
                     filter(variable=="raw")),
             aes(x=date, y=value, colour=type), size=1,alpha=0.2)+
   geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
-  geom_rect(data=campaigndates, 
-            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.1)+
+  geom_rect(data=campaigndates[2:3,], 
+            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.2)+
   ggtitle("Number of IRA Gifts over Time")+
   scale_x_date()+
   scale_colour_discrete(name="Gift Type")+
   xlab("Year")+
   ylab("Number of Gifts")+
   theme_clean()+
-  theme(axis.text = element_text(size = 8),
-        axis.title=element_text(face="bold", size= 10),
-        plot.title=element_text(face = "bold", size= 12),
+  theme(axis.text = element_text(size = 10),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
+        legend.key=element_rect(fill="white"),
         legend.background =element_rect(fill="transparent", colour=NA))+
   geom_smooth(
     data=(ira_adjusted%>%filter(date<"2006-01-01")%>%
@@ -93,12 +122,7 @@ ggplot()+
   geom_smooth(
     data=(ira_adjusted%>%filter(date>="2006-01-01")%>%
             filter(variable=="raw")),
-    aes(x=date, y=value, colour=type), size=1,se=FALSE)+
-  scale_color_manual(values=c( "#9999CC","#CC6666","Grey"))
-
-
-
-
+    aes(x=date, y=value, colour=type), size=1,se=FALSE)
 
 #Same plot, but using trend component only 
 ggplot()+
@@ -106,17 +130,18 @@ ggplot()+
                     filter(variable=="trend")),
             aes(x=date, y=value, colour=type), size=1,alpha=0.2)+
   geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
-  geom_rect(data=campaigndates, 
-            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.1)+
+  geom_rect(data=campaigndates[2:3,], 
+            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.2)+
   ggtitle("Trend in Gifts over Time")+
   scale_x_date()+
   scale_colour_discrete(name="Gift Type")+
   xlab("Year")+
   ylab("Number of Gifts")+
   theme_clean()+
-  theme(axis.text = element_text(size = 8),
-        axis.title=element_text(face="bold", size= 10),
-        plot.title=element_text(face = "bold", size= 12),
+  theme(axis.text = element_text(size = 10),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
+        legend.key=element_rect(fill="white"),
         legend.background =element_rect(fill="transparent", colour=NA))+
   geom_smooth(
     data=(ira_adjusted%>%filter(date<"2006-01-01")%>%
@@ -125,32 +150,32 @@ ggplot()+
   geom_smooth(
     data=(ira_adjusted%>%filter(date>="2006-01-01")%>%
             filter(variable=="raw")),
-    aes(x=date, y=value, colour=type), size=1,se=FALSE)+
-scale_color_manual(values=c( "#9999CC","#CC6666","grey"))
-
-
+    aes(x=date, y=value, colour=type), size=1,se=FALSE)
 
 #Reponse to marketing line graph
 #Response to marketing
 ggplot()+
   geom_line(data=(ira_adjusted%>%
                     filter(variable=="raw"&
-                             date>="2011-09-21")),
-            aes(x=date, y=value, colour=type), size=1)+
+                             date>="2011-09-21")%>%
+                    rename(Type=type)),
+            aes(x=date, y=value, colour=Type), size=1)+
 
-  geom_vline(data=ira_mailings_summary, aes(xintercept = as.numeric(date), colour="green"))+
+  geom_vline(data=ira_mailings_summary, aes(xintercept = as.numeric(date)), colour="goldenrod", size=1)+
   xlab("Date")+
-
   ylab("Number of IRA Gifts")+
   ggtitle("Marketing Outreach ")+
   theme_clean()+
-  theme(axis.text = element_text(size = 8),
-        axis.title=element_text(face="bold", size= 10),
-        plot.title=element_text(face = "bold", size= 12),
-        legend.position = "none")
+  theme(axis.text = element_text(size = 10),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
+        legend.key=element_rect(fill="white"),
+        legend.background =element_rect(fill="transparent", colour=NA))+
+  geom_text(data=ira_mailings_summary[-c(2,5,7),], aes(x=date, y=425, label=touch), size=2.5, hjust=-.06)+
+  geom_text(data=ira_mailings_summary[2,], aes(x=date, y=375, label=touch), size=2.5, hjust=-.06)+
+  geom_text(data=ira_mailings_summary[5,], aes(x=date, y=445, label=touch), size=2.5, hjust=-.06)+
+  geom_text(data=ira_mailings_summary[7,], aes(x=date, y=445, label=touch), size=2.5, hjust=1.2)
 
-
-#Loy - addition to marketing response
 
 ggplot(ira_responses%>%
          mutate(year=format(as.Date(date, format="%Y-%m-%d"),"%Y"))%>%
@@ -159,40 +184,66 @@ ggplot(ira_responses%>%
          group_by(year,type)%>%
          summarize(responses=n())
 )+
-  geom_bar(aes(x=year, y=responses, fill=type), stat="identity",position="fill",show.legend =TRUE)+scale_fill_brewer(palette="Dark2")+
+  geom_bar(aes(x=year, y=responses, fill=type), stat="identity",position="fill",show.legend =TRUE)+
+  #scale_fill_brewer(palette="Dark2")+
   xlab("Year")+
   ylab("Proportion of IRA Gifts")+
   ggtitle("Marketing Outreach Response")+
-  scale_y_continuous(labels = percent)
+  scale_y_continuous(labels = percent)+
+  theme_clean()
 
+#Create character vector to use as a filter. Can create a function that combines both steps
+#by asking for the data frame, column name, and number of summary rows and then 
+top_sources<-ira_adj%>%group_by(source)%>%
+  summarize(source_counts=n_distinct(id))%>%
+  top_n(8)%>%
+  ungroup()%>%
+  select(source)%>%
+  unlist()
 
-#Jacki - Source Distribution 
-#display.brewer.all() to see all color palettes
-
-ira_adj_dummy<-ira_adj%>%group_by(source)%>%
-  summarize(source_counts=n_distinct(id))%>%top_n(8)
-ira_adj_plot<-subset(ira_adj,source==ira_adj_dummy$source)
-
-ggplot(ira_adj_plot%>%group_by(year,source)%>%summarize(source_counts=n_distinct(id)), 
-       aes(x=year,y=source_counts,fill=source)) + geom_bar(stat="identity",position="fill",show.legend =TRUE)+scale_fill_brewer(palette="Dark2")+
+#subset based on character vector of sources
+ggplot((subset(ira_adj, source %in% top_sources))%>%
+         group_by(year,source)%>%
+         summarize(source_counts=n_distinct(id))%>%
+         ungroup()%>%
+         rename(Source=source), 
+       aes(x=year,y=source_counts,fill=Source)) + 
+  geom_bar(stat="identity",position="fill",show.legend =TRUE)+
+  #scale_fill_brewer(palette="Dark2")+
   xlab("Date")+
   ylab("Source Count Percentages")+
   ggtitle("Source Distribution over Time")+
   scale_y_continuous(labels = percent)+
-  theme_clean()
+  theme_clean()+
+  theme(axis.text = element_text(size = 10),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
+        legend.key=element_rect(fill="white"),
+        legend.background =element_rect(fill="transparent", colour=NA))
 
-#Jacki - Payment Method Distribution
+#Create payment method character vector
+payments<-ira_adj%>%
+  group_by(payment_method)%>%
+  summarize(source_counts=n_distinct(id))%>%
+  select(payment_method)%>%
+  unlist()
 
-ira_adj_dummy<-ira_adj%>%group_by(payment_method)%>%
-  summarize(source_counts=n_distinct(id))%>%top_n(9)
-ira_adj_plot<-subset(ira_adj,payment_method==ira_adj_dummy$payment_method)
-
-ggplot(ira_adj_plot%>%group_by(year,payment_method)%>%summarize(source_counts=n_distinct(id)), 
-       aes(x=year,y=source_counts,fill=payment_method)) + geom_bar(stat="identity",position="fill",show.legend =TRUE)+scale_fill_brewer(palette="Dark2")+
+ggplot((subset(ira_adj, payment_method %in% payments))%>%
+         group_by(year,payment_method)%>%
+         summarize(payment_counts=n_distinct(id))%>%
+         ungroup()%>%
+         rename(`Payment Method`=payment_method), 
+       aes(x=year,y=payment_counts,fill=`Payment Method`)) + 
+  geom_bar(stat="identity",position="fill",show.legend =TRUE)+
   xlab("Date")+
   ylab("Payment Method Percentages")+
   ggtitle("Payment Method Distribution over Time")+
-  theme_clean()+
+    theme_clean()+
+    theme(axis.text = element_text(size = 10),
+          axis.title=element_text(face="bold", size= 16),
+          plot.title=element_text(face = "bold", size= 24),
+          legend.key=element_rect(fill="white"),
+          legend.background =element_rect(fill="transparent", colour=NA))+
   scale_y_continuous(labels = percent)
 
 
@@ -206,28 +257,32 @@ ggplot()+
                     filter(value>0)),
             aes(x=yearmon, y=value, colour=variable), size=1)+
   geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
-  geom_rect(data=campaigndates, 
-            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.1)+
+  geom_rect(data=campaigndates[2:3,], 
+            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.2)+
   ggtitle("Average Giving Amounts over Time")+
   scale_x_date()+
-  scale_color_manual(values=c( "#9999CC","#CC6666","grey"),guide=FALSE)+
+  #scale_color_manual(values=c( "#9999CC","#CC6666","grey"),guide=FALSE)+
   xlab("Year")+
   ylab("Average Gift Amount")+
-  theme(axis.text = element_text(size = 8),
-        axis.title=element_text(face="bold", size= 10),
-        plot.title=element_text(face = "bold", size= 12),
-        legend.background =element_rect(fill="transparent", colour=NA))+
-  theme_clean()
-
+  theme_clean()+
+  theme(legend.position="bottom",
+        legend.direction = "horizontal",
+        legend.box="horizontal",
+        legend.key=element_rect(fill="white"),
+        axis.text = element_text(size = 12),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
+        legend.background =element_rect(fill="transparent", colour=NA))
+ 
 
 #Raw gift amount over time with smooth lines
 ggplot()+
   geom_line(data=(ira_adjusted_mean%>%
                     filter(variable=="raw")),
-            aes(x=date, y=value, colour=type), size=1,alpha=0.1)+
+            aes(x=date, y=value, colour=type), size=1,alpha=0.4)+
   geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
-  geom_rect(data=campaigndates, 
-            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.1)+
+  geom_rect(data=campaigndates[2:3,], 
+            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.2)+
   geom_smooth(
     data=(ira_adjusted_mean%>%
             filter(date>="2006-01-01")%>%
@@ -244,24 +299,24 @@ ggplot()+
   scale_x_date()+
   xlab("Date")+
   ylab("Average Gift Amount")+
-  theme(axis.text = element_text(size = 8),
-        axis.title=element_text(face="bold", size= 10),
-        plot.title=element_text(face = "bold", size= 12),
-        legend.position = "none")+
-  scale_color_manual(values=c( "#9999CC","#CC6666","grey"),guide=FALSE)+
-  theme_clean()
-
-
-
+  theme_clean()+
+  theme(legend.position="bottom",
+        legend.direction = "horizontal",
+        legend.box="horizontal",
+        legend.key=element_rect(fill="white"),
+        axis.text = element_text(size = 12),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
+        legend.background =element_rect(fill="transparent", colour=NA))
 
 #Trend of Avg gift amount over time
 ggplot()+
   geom_line(data=(ira_adjusted_mean%>%
                     filter(variable=="trend")),
-            aes(x=date, y=value, colour=type), size=1,alpha=0.2)+
+            aes(x=date, y=value, colour=type), size=1,alpha=0.4)+
   geom_vline(aes(xintercept =as.numeric(as.Date("2006-01-01"))),color="blue", size=1)+
-  geom_rect(data=campaigndates, 
-            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.1)+
+  geom_rect(data=campaigndates[2:3,], 
+            mapping=aes(xmin=start, xmax=end, ymin=-Inf, ymax=Inf), color='grey', alpha=0.2)+
   geom_smooth(
     data=(ira_adjusted_mean%>%
             filter(date>="2006-01-01")%>%
@@ -279,12 +334,14 @@ ggplot()+
   xlab("Date")+
   ylab("Average Gift Amount")+
   theme_clean()+
-  theme(axis.text = element_text(size = 8),
-        axis.title=element_text(face="bold", size= 10),
-        plot.title=element_text(face = "bold", size= 12),
-        legend.position = "none")+
-  scale_color_manual(values=c( "#9999CC","#CC6666","grey"),guide=FALSE)+theme_clean()
-
+  theme(legend.position="bottom",
+        legend.direction = "horizontal",
+        legend.box="horizontal",
+        legend.key=element_rect(fill="white"),
+        axis.text = element_text(size = 12),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
+        legend.background =element_rect(fill="transparent", colour=NA))
 
 ######Slide 1:Summary Stats#######
 View(ira_adj %>% summarize(
