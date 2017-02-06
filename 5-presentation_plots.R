@@ -486,3 +486,29 @@ View(ira_adj %>%
 
 View(ira_adj %>%
        filter(trans_date>="2006-01-01"))
+
+#Score Plots
+ira_adj$GPS<- factor(ira_adj$GPS, levels=c("Least Likely", "Less Likely",
+                                           "Somewhat Likely", "More Likely", "Most Likely", ""))
+
+ira_adj$MGS<- factor(ira_adj$MGS, levels=c("Least Likely", "Less Likely",
+                                           "Somewhat Likely", "More Likely", "Most Likely", ""))
+
+
+ggplot(ira_adj%>%
+         group_by(GPS)%>%
+         summarize(number=n_distinct(id)))+
+  geom_bar(aes(GPS, y=number), stat="identity")+
+  xlab("Gift Planning Score")+
+  ylab("Number of Donors")+
+  ggtitle("Number of IRA Donors by Gift Planning Score")+
+  theme_clean()
+
+ggplot(ira_adj%>%
+         group_by(MGS)%>%
+         summarize(number=n_distinct(id)))+
+  geom_bar(aes(MGS, y=number), stat="identity")+
+  xlab("Major Gift Score")+
+  ylab("Number of Donors")+
+  ggtitle("Number of IRA Donors by Major Gift Score")+
+  theme_clean()
