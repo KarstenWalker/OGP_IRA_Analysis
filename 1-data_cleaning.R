@@ -432,6 +432,7 @@ ira_yearmon<-ira_adj%>%
             mean_amt=mean(amt),
             mean_adj_amt=mean(adj_amt),
             mean_ira_amt=mean(adj_ira_amt),
+            mean_non_ira_amt=mean(non_ira_amt),
             average_amt=total_giving/num_donors,
             average_adj_amt=total_adj_giving/num_donors,
             median_amt=median(amt),
