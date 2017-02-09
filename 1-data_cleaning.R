@@ -226,6 +226,9 @@ ira_adj<-ira_adj%>%
 #Remove useless data.frame from environment
 rm(list='ira_ageless')
 
+#Remove IRA Data
+rm(list='ira_data')
+
 #Load move_column function
 source("R:/AIM/Advanced Analytics/Functions/move_column.r")
 
@@ -288,7 +291,8 @@ deciles<- read.csv("R:/AIM/Advanced Analytics/Functions/deciles.csv",
 )
 
 deciles<-deciles%>%rename(CADS_decile=decile)%>%
-  select(CADS_decile, id)
+  select(as.numeric(CADS_decile), id)
+
 
 #Join to summary table
 ira_adj<-ira_adj%>%
