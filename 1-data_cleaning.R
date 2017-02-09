@@ -423,6 +423,7 @@ ira_yearmon<-ira_adj%>%
             num_ira_donors=sum(ifelse(row_number(id)==1 & num_ira_gifts>=1,1,0)),
             num_gifts= n(),
             num_ira_gifts=sum(ira_gift),
+            num_non_ira_gifts=num_gifts-num_ira_gifts,
             num_first_ira=sum(first_ira),
             num_eligible= sum(yearmon_eligible_flg),
             total_giving=sum(amt),
