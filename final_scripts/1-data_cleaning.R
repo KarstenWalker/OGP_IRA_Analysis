@@ -299,11 +299,7 @@ deciles<-deciles%>%rename(CADS_decile=decile)
 
 #Join to summary table
 ira_adj<-ira_adj%>%
-  left_join(deciles, by="id")%>%
-  mutate(group = ifelse(decile == "1" | decile == "2" |
-                          decile == "3" | decile == "4", "Small", 
-                        ifelse(decile == "5" | decile == "6" | decile == "7" |
-                                 decile == "8", "Medium", "Large")))
+  left_join(deciles, by="id")
 
 rm(list='deciles')
 

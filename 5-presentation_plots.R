@@ -30,18 +30,17 @@ names(pal_blind_type)<-types
 #Plot no highlights
 ggplot(ira_adj%>%
          ungroup()%>%
-         filter(norm_outlier_score<.020 |decile!="Top"| decile !="10")
-       %>%
+         filter(norm_outlier_score<.20 |decile!="Top"| decile !="10" &
+                  age>=70.5 &num_ira_gifts>1)%>%
          select(ira_law,age,time_between, adj_amt)%>%
-         filter(age>=70.5)%>%
          mutate(age=trunc(age))%>%
          group_by(age, ira_law)%>%
          summarize(time_between=mean(time_between),
                    avg_amt=mean(adj_amt)))+
-  geom_point(aes(x=age,y=time_between,color=as.factor(ira_law), size=avg_amt*100))+
+  geom_point(aes(x=age,y=time_between,color=as.factor(ira_law), size=avg_amt))+
   xlim(70.5,95)+
   xlab("Age At Time of Gift")+
-  ylim(0,300)+
+  ylim(0,500)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
   scale_size_continuous(range=c(0,20),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
@@ -60,10 +59,9 @@ ggplot(ira_adj%>%
 #Plot highlight for time between
 ggplot(ira_adj%>%
          ungroup()%>%
-         filter(norm_outlier_score<.020 |decile!="Top"| decile !="10")
-       %>%
+         filter(norm_outlier_score<.20 |decile!="Top"| decile !="10" &
+                  age>=70.5 &num_ira_gifts>1)%>%
          select(ira_law,age,time_between, adj_amt)%>%
-         filter(age>=70.5)%>%
          mutate(age=trunc(age))%>%
          group_by(age, ira_law)%>%
          summarize(time_between=mean(time_between),
@@ -82,7 +80,7 @@ ggplot(ira_adj%>%
             alpha=.5)+
   xlim(70.25,95)+
   xlab("Age At Time of Gift")+
-  ylim(0,300)+
+  ylim(0,500)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
   scale_size_continuous(range=c(0,20),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
@@ -101,10 +99,9 @@ ggplot(ira_adj%>%
 #Plot highlight for amount
 ggplot(ira_adj%>%
          ungroup()%>%
-         filter(norm_outlier_score<.020 |decile!="Top"| decile !="10")
-       %>%
+         filter(norm_outlier_score<.20 |decile!="Top"| decile !="10" &
+                  age>=70.5 &num_ira_gifts>1)%>%
          select(ira_law,age,time_between, adj_amt)%>%
-         filter(age>=70.5)%>%
          mutate(age=trunc(age))%>%
          group_by(age, ira_law)%>%
          summarize(time_between=mean(time_between),
@@ -494,7 +491,7 @@ ira_adj$GPS<- factor(ira_adj$GPS, levels=c("Least Likely", "Less Likely",
 ira_adj$MGS<- factor(ira_adj$MGS, levels=c("Least Likely", "Less Likely",
                                            "Somewhat Likely", "More Likely", "Most Likely", ""))
 
-
+#Gift Planning Score
 ggplot(ira_adj%>%
          group_by(GPS)%>%
          summarize(number=n_distinct(id)))+
@@ -504,6 +501,7 @@ ggplot(ira_adj%>%
   ggtitle("Number of IRA Donors by Gift Planning Score")+
   theme_clean()
 
+Major Gift Score
 ggplot(ira_adj%>%
          group_by(MGS)%>%
          summarize(number=n_distinct(id)))+
@@ -511,4 +509,15 @@ ggplot(ira_adj%>%
   xlab("Major Gift Score")+
   ylab("Number of Donors")+
   ggtitle("Number of IRA Donors by Major Gift Score")+
+  theme_clean()
+
+#Count by Decile
+
+ggplot(ira_adj%>%
+         group_by(decile)%>%
+         summarize(number=n_distinct(id)))+
+  geom_bar(aes(decile, y=number), stat="identity")+
+  ggtitle("Decile, Based On Adjusted Total Lifetime Giving")+
+  ylab("Number of Donors")+
+  xlab("Decile")+
   theme_clean()
