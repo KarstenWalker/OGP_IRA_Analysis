@@ -30,23 +30,23 @@ names(pal_blind_type)<-types
 #Plot no highlights
 ggplot(ira_adj%>%
          ungroup()%>%
-         filter(norm_outlier_score<.20 |decile!="Top"| decile !="10" &
-                  age>=70.5 &num_ira_gifts>1)%>%
-         select(ira_law,age,time_between, adj_amt)%>%
-         mutate(age=trunc(age))%>%
-         group_by(age, ira_law)%>%
+         filter(norm_outlier_score<.10 |decile!="Top"| decile !="10" &
+                  age_at_trans>=70.5 &num_ira_gifts>1)%>%
+         select(ira_law,age_at_trans,time_between, adj_amt)%>%
+         mutate(age_at_trans=trunc(age_at_trans))%>%
+         group_by(age_at_trans, ira_law)%>%
          summarize(time_between=mean(time_between),
                    avg_amt=mean(adj_amt))%>%
          filter(time_between>0)
        )+
-  geom_point(aes(x=age,y=time_between,color=as.factor(ira_law), size=avg_amt))+
-  xlim(70.5,95)+
+  geom_point(aes(x=age_at_trans,y=time_between,color=as.factor(ira_law), size=avg_amt))+
+  xlim(70.5,88)+
   xlab("Age At Time of Gift")+
-  ylim(0,400)+
+  ylim(0,500)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
   scale_size_continuous(range=c(0,20),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
-  geom_smooth (aes(x=age,y=time_between,color=as.factor(ira_law)), se=FALSE)+
+  geom_smooth (aes(x=age_at_trans,y=time_between,color=as.factor(ira_law)), se=FALSE)+
   ggtitle("Donors Give More, But Less Frequently After Law")+
   theme_clean()+
   theme(legend.position="bottom",
@@ -61,34 +61,33 @@ ggplot(ira_adj%>%
 #Plot highlight for time between
 ggplot(ira_adj%>%
          ungroup()%>%
-         filter(norm_outlier_score<.20 |decile!="Top"| decile !="10" &
-                  age>=70.5 &num_ira_gifts>1)%>%
-         select(ira_law,age,time_between, adj_amt)%>%
-         mutate(age=trunc(age))%>%
-         group_by(age, ira_law)%>%
+         filter(norm_outlier_score<.10 |decile!="Top"| decile !="10" &
+                  age_at_trans>=70.5 &num_ira_gifts>1)%>%
+         select(ira_law,age_at_trans,time_between, adj_amt)%>%
+         mutate(age_at_trans=trunc(age_at_trans))%>%
+         group_by(age_at_trans, ira_law)%>%
          summarize(time_between=mean(time_between),
                    avg_amt=mean(adj_amt))%>%
-         filter(time_between>0)
-       )+
-  geom_point(aes(x=age,y=time_between,color=as.factor(ira_law), size=avg_amt))+
+         filter(time_between>0))+
+  geom_point(aes(x=age_at_trans,y=time_between,color=as.factor(ira_law), size=avg_amt))+
   geom_rect(data=(ira_adj%>%
               ungroup()%>%
-              filter(norm_outlier_score<.20 |decile!="Top"| decile !="10")
-            %>%
-              select(ira_law,age,time_between, adj_amt)%>%
-              filter(age>=70.5)%>%
-              mutate(age=trunc(age))%>%
-              group_by(age, ira_law)%>%
+                filter(norm_outlier_score<.10 |decile!="Top"| decile !="10" &
+                         age_at_trans>=70.5 &num_ira_gifts>1)%>%
+              select(ira_law,age_at_trans,time_between, adj_amt)%>%
+              filter(age_at_trans>=70.5)%>%
+              mutate(age_at_trans=trunc(age_at_trans))%>%
+              group_by(age_at_trans, ira_law)%>%
               summarize(time_between=mean(time_between))%>%
-              filter(age==71)), aes(xmin=age-.5, xmax=age+.5, ymin=min(time_between)-10, ymax=max(time_between)+10), fill="light blue",
+              filter(age_at_trans==78)), aes(xmin=age_at_trans-.5, xmax=age_at_trans+.5, ymin=min(time_between)-10, ymax=max(time_between)+10), fill="light blue",
             alpha=.5)+
-  xlim(70.5,95)+
+  xlim(70.5,88)+
   xlab("Age At Time of Gift")+
-  ylim(0,400)+
+  ylim(0,500)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
   scale_size_continuous(range=c(0,20),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
-  geom_smooth (aes(x=age,y=time_between,color=as.factor(ira_law)), se=FALSE)+
+  geom_smooth (aes(x=age_at_trans,y=time_between,color=as.factor(ira_law)), se=FALSE)+
   ggtitle("Donors Give More, But Less Frequently After Law")+
   theme_clean()+
   theme(legend.position="bottom",
@@ -103,34 +102,33 @@ ggplot(ira_adj%>%
 #Plot highlight for amount
 ggplot(ira_adj%>%
          ungroup()%>%
-         filter(norm_outlier_score<.20 |decile!="Top"| decile !="10" &
-                  age>=70.5 &num_ira_gifts>1)%>%
-         select(ira_law,age,time_between, adj_amt)%>%
-         mutate(age=trunc(age))%>%
-         group_by(age, ira_law)%>%
+         filter(norm_outlier_score<.10 |decile!="Top"| decile !="10" &
+                  age_at_trans>=70.5 &num_ira_gifts>1)%>%
+         select(ira_law,age_at_trans,time_between, adj_amt)%>%
+         mutate(age_at_trans=trunc(age_at_trans))%>%
+         group_by(age_at_trans, ira_law)%>%
          summarize(time_between=mean(time_between),
                    avg_amt=mean(adj_amt))%>%
-         filter(time_between>0)
-       )+
-  geom_point(aes(x=age,y=time_between,color=as.factor(ira_law), size=avg_amt))+
+         filter(time_between>0))+
+  geom_point(aes(x=age_at_trans,y=time_between,color=as.factor(ira_law), size=avg_amt))+
   geom_rect(data=(ira_adj%>%
                     ungroup()%>%
-                    filter(norm_outlier_score<.20 |decile!="Top"| decile !="10")
-                  %>%
-                    select(ira_law,age,time_between, adj_amt)%>%
-                    filter(age>=70.5)%>%
-                    mutate(age=trunc(age))%>%
-                    group_by(age, ira_law)%>%
+                    filter(norm_outlier_score<.10 |decile!="Top"| decile !="10" &
+                             age_at_trans>=70.5 &num_ira_gifts>1)%>%
+                    select(ira_law,age_at_trans,time_between, adj_amt)%>%
+                    filter(age_at_trans>=70.5)%>%
+                    mutate(age_at_trans=trunc(age_at_trans))%>%
+                    group_by(age_at_trans, ira_law)%>%
                     summarize(time_between=mean(time_between))%>%
-                    filter(age==75)), aes(xmin=age-.5, xmax=age+.5, ymin=min(time_between)-10, ymax=max(time_between)+10), fill="light blue",
+                    filter(age_at_trans==83)), aes(xmin=age_at_trans-.5, xmax=age_at_trans+.5, ymin=min(time_between)-10, ymax=max(time_between)+10), fill="light blue",
             alpha=.5)+
-  xlim(70.5,95)+
+  xlim(70.5,88)+
   xlab("Age At Time of Gift")+
-  ylim(0,400)+
+  ylim(0,500)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
-  scale_size_continuous(range=c(0,20),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
-  geom_smooth (aes(x=age,y=time_between,color=as.factor(ira_law)), se=FALSE)+
+  scale_size_continuous(range=c(0,30),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
+  geom_smooth (aes(x=age_at_trans,y=time_between,color=as.factor(ira_law)), se=FALSE)+
   ggtitle("Donors Give More, But Less Frequently After Law")+
   theme_clean()+
   theme(legend.position="bottom",
