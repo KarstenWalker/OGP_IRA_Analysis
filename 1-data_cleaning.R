@@ -48,6 +48,12 @@ ira_data$birth_date<-mdy(ira_data$birth_date)
 ira_data$death_date<-mdy(ira_data$death_date)
 ira_mailings$date= mdy(ira_mailings$date)
 
+#Fix bad birthdays
+
+ira_data$birth_date<-as.Date(ifelse(ira_data$birth_date > "2000-01-01", 
+                                    format(ira_data$birth_date, "19%y-%m-%d"), 
+                                    format(ira_data$birth_date)))
+
 #Create mailing summary data frame
 ira_mailings_summary<- ira_mailings%>%
   group_by(date, type, touch)%>%
@@ -250,6 +256,10 @@ ira_adj<-ira_adj%>%
   move_column(c("age_birth"), "before", "age_cc")%>%
   move_column(c("age"), "after", "age_first_ira")%>%
   move_column(c("ira_eligible"), "after", "trans_date")%>%
+  ungroup()%>%
+  group_by(id)%>%
+  arrange(trans_date)%>%
+  mutate(age_at_trans=((as.numeric(trans_date)/365)+1970)-(2017-age))%>%
   ungroup()%>%
   mutate(gift_age_bracket=ifelse(age<70.5, "<70.5",
                                  ifelse(age>=70.5 & age<75, "70.5-75",
