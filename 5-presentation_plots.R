@@ -30,21 +30,23 @@ names(pal_blind_type)<-types
 #Plot no highlights
 ggplot(ira_adj%>%
          ungroup()%>%
-         filter(norm_outlier_score<.20 |decile!="Top"| decile !="10" &
-                  age>=70.5 &num_ira_gifts>1)%>%
-         select(ira_law,age,time_between, adj_amt)%>%
-         mutate(age=trunc(age))%>%
-         group_by(age, ira_law)%>%
+         filter(norm_outlier_score<.10 |decile!="Top"| decile !="10" &
+                  age_at_trans>=70.5 &num_ira_gifts>1)%>%
+         select(ira_law,age_at_trans,time_between, adj_amt)%>%
+         mutate(age_at_trans=trunc(age_at_trans))%>%
+         group_by(age_at_trans, ira_law)%>%
          summarize(time_between=mean(time_between),
-                   avg_amt=mean(adj_amt)))+
-  geom_point(aes(x=age,y=time_between,color=as.factor(ira_law), size=avg_amt))+
-  xlim(70.5,95)+
+                   avg_amt=mean(adj_amt))%>%
+         filter(time_between>0)
+       )+
+  geom_point(aes(x=age_at_trans,y=time_between,color=as.factor(ira_law), size=avg_amt))+
+  xlim(70.5,88)+
   xlab("Age At Time of Gift")+
-  ylim(0,500)+
+  ylim(0,365)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
   scale_size_continuous(range=c(0,20),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
-  geom_smooth (aes(x=age,y=time_between,color=as.factor(ira_law)), se=FALSE)+
+  geom_smooth (aes(x=age_at_trans,y=time_between,color=as.factor(ira_law)), se=FALSE)+
   ggtitle("Donors Give More, But Less Frequently After Law")+
   theme_clean()+
   theme(legend.position="bottom",
@@ -59,32 +61,33 @@ ggplot(ira_adj%>%
 #Plot highlight for time between
 ggplot(ira_adj%>%
          ungroup()%>%
-         filter(norm_outlier_score<.20 |decile!="Top"| decile !="10" &
-                  age>=70.5 &num_ira_gifts>1)%>%
-         select(ira_law,age,time_between, adj_amt)%>%
-         mutate(age=trunc(age))%>%
-         group_by(age, ira_law)%>%
+         filter(norm_outlier_score<.10 |decile!="Top"| decile !="10" &
+                  age_at_trans>=70.5 &num_ira_gifts>1)%>%
+         select(ira_law,age_at_trans,time_between, adj_amt)%>%
+         mutate(age_at_trans=trunc(age_at_trans))%>%
+         group_by(age_at_trans, ira_law)%>%
          summarize(time_between=mean(time_between),
-                   avg_amt=mean(adj_amt)))+
-  geom_point(aes(x=age,y=time_between,color=as.factor(ira_law), size=avg_amt*100))+
+                   avg_amt=mean(adj_amt))%>%
+         filter(time_between>0))+
+  geom_point(aes(x=age_at_trans,y=time_between,color=as.factor(ira_law), size=avg_amt))+
   geom_rect(data=(ira_adj%>%
               ungroup()%>%
-              filter(norm_outlier_score<.020 |decile!="Top"| decile !="10")
-            %>%
-              select(ira_law,age,time_between, adj_amt)%>%
-              filter(age>=70.5)%>%
-              mutate(age=trunc(age))%>%
-              group_by(age, ira_law)%>%
+                filter(norm_outlier_score<.10 |decile!="Top"| decile !="10" &
+                         age_at_trans>=70.5 &num_ira_gifts>1)%>%
+              select(ira_law,age_at_trans,time_between, adj_amt)%>%
+              filter(age_at_trans>=70.5)%>%
+              mutate(age_at_trans=trunc(age_at_trans))%>%
+              group_by(age_at_trans, ira_law)%>%
               summarize(time_between=mean(time_between))%>%
-              filter(age==71)), aes(xmin=age-.5, xmax=age+.5, ymin=min(time_between)-10, ymax=max(time_between)+10), fill="light blue",
+              filter(age_at_trans==78)), aes(xmin=age_at_trans-.5, xmax=age_at_trans+.5, ymin=min(time_between)-10, ymax=max(time_between)+10), fill="light blue",
             alpha=.5)+
-  xlim(70.25,95)+
+  xlim(70.5,88)+
   xlab("Age At Time of Gift")+
-  ylim(0,500)+
+  ylim(0,365)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
   scale_size_continuous(range=c(0,20),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
-  geom_smooth (aes(x=age,y=time_between,color=as.factor(ira_law)), se=FALSE)+
+  geom_smooth (aes(x=age_at_trans,y=time_between,color=as.factor(ira_law)), se=FALSE)+
   ggtitle("Donors Give More, But Less Frequently After Law")+
   theme_clean()+
   theme(legend.position="bottom",
@@ -99,32 +102,33 @@ ggplot(ira_adj%>%
 #Plot highlight for amount
 ggplot(ira_adj%>%
          ungroup()%>%
-         filter(norm_outlier_score<.20 |decile!="Top"| decile !="10" &
-                  age>=70.5 &num_ira_gifts>1)%>%
-         select(ira_law,age,time_between, adj_amt)%>%
-         mutate(age=trunc(age))%>%
-         group_by(age, ira_law)%>%
+         filter(norm_outlier_score<.10 |decile!="Top"| decile !="10" &
+                  age_at_trans>=70.5 &num_ira_gifts>1)%>%
+         select(ira_law,age_at_trans,time_between, adj_amt)%>%
+         mutate(age_at_trans=trunc(age_at_trans))%>%
+         group_by(age_at_trans, ira_law)%>%
          summarize(time_between=mean(time_between),
-                   avg_amt=mean(adj_amt)))+
-  geom_point(aes(x=age,y=time_between,color=as.factor(ira_law), size=avg_amt*100))+
+                   avg_amt=mean(adj_amt))%>%
+         filter(time_between>0))+
+  geom_point(aes(x=age_at_trans,y=time_between,color=as.factor(ira_law), size=avg_amt))+
   geom_rect(data=(ira_adj%>%
                     ungroup()%>%
-                    filter(norm_outlier_score<.020 |decile!="Top"| decile !="10")
-                  %>%
-                    select(ira_law,age,time_between, adj_amt)%>%
-                    filter(age>=70.5)%>%
-                    mutate(age=trunc(age))%>%
-                    group_by(age, ira_law)%>%
+                    filter(norm_outlier_score<.10 |decile!="Top"| decile !="10" &
+                             age_at_trans>=70.5 &num_ira_gifts>1)%>%
+                    select(ira_law,age_at_trans,time_between, adj_amt)%>%
+                    filter(age_at_trans>=70.5)%>%
+                    mutate(age_at_trans=trunc(age_at_trans))%>%
+                    group_by(age_at_trans, ira_law)%>%
                     summarize(time_between=mean(time_between))%>%
-                    filter(age==75)), aes(xmin=age-.5, xmax=age+.5, ymin=min(time_between)-10, ymax=max(time_between)+10), fill="light blue",
+                    filter(age_at_trans==83)), aes(xmin=age_at_trans-.5, xmax=age_at_trans+.5, ymin=min(time_between)-10, ymax=max(time_between)+10), fill="light blue",
             alpha=.5)+
-  xlim(70.25,95)+
+  xlim(70.5,88)+
   xlab("Age At Time of Gift")+
-  ylim(0,300)+
+  ylim(0,365)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
-  scale_size_continuous(range=c(0,20),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
-  geom_smooth (aes(x=age,y=time_between,color=as.factor(ira_law)), se=FALSE)+
+  scale_size_continuous(range=c(0,30),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
+  geom_smooth (aes(x=age_at_trans,y=time_between,color=as.factor(ira_law)), se=FALSE)+
   ggtitle("Donors Give More, But Less Frequently After Law")+
   theme_clean()+
   theme(legend.position="bottom",
@@ -201,11 +205,11 @@ ggplot()+
         legend.background =element_rect(fill="transparent", colour=NA))+
   geom_smooth(
     data=(ira_adjusted%>%filter(date<"2006-01-01")%>%
-            filter(variable=="raw")),
+            filter(variable=="trend")),
     aes(x=date, y=value, colour=type), size=1,se=FALSE)+
   geom_smooth(
     data=(ira_adjusted%>%filter(date>="2006-01-01")%>%
-            filter(variable=="raw")),
+            filter(variable=="trend")),
     aes(x=date, y=value, colour=type), size=1,se=FALSE)
 
 
@@ -230,113 +234,15 @@ ggplot()+
         legend.background =element_rect(fill="transparent", colour=NA))+
   geom_smooth(
     data=(ira_adjusted%>%filter(date<"2006-01-01")%>%
-            filter(variable=="raw")),
+            filter(variable=="trend")),
     aes(x=date, y=value, colour=type), size=1,se=FALSE)+
   geom_smooth(
     data=(ira_adjusted%>%filter(date>="2006-01-01")%>%
-            filter(variable=="raw")),
+            filter(variable=="trend")),
     aes(x=date, y=value, colour=type), size=1,se=FALSE)
 
-#Reponse to marketing line graph
-#Response to marketing
-ggplot()+
-  geom_line(data=(ira_adjusted%>%
-                    filter(variable=="raw"&
-                             date>="2011-09-21")%>%
-                    rename(Type=type)),
-            aes(x=date, y=value, colour=Type), size=1)+
-
-  geom_vline(data=ira_mailings_summary, aes(xintercept = as.numeric(date)), colour="goldenrod", size=1)+
-  xlab("")+
-  ylab("Number of Gifts")+
-  scale_colour_discrete(name="Gift Type")+
-  ggtitle("Marketing outreach has no observable impact")+
-  theme_clean()+
-  theme(axis.text = element_text(size = 10),
-        axis.title=element_text(face="bold", size= 16),
-        plot.title=element_text(face = "bold", size= 24),
-        legend.key=element_rect(fill="white"),
-        legend.background =element_rect(fill="transparent", colour=NA))
-  
-#  geom_text(data=ira_mailings_summary[-c(2,5,7),], aes(x=date, y=425, label=paste(touch,"(",donors,")",sep=" ")), size=2.5, hjust=-.06)+
-#  geom_text(data=ira_mailings_summary[2,], aes(x=date, y=375, label=paste(touch,"(",donors,")",sep=" ")), size=2.5, hjust=-.06)+
-#  geom_text(data=ira_mailings_summary[5,], aes(x=date, y=445, label=paste(touch,"(",donors,")",sep=" ")), size=2.5, hjust=-.06)+
-#  geom_text(data=ira_mailings_summary[7,], aes(x=date, y=445, label=paste(touch,"(",donors,")",sep=" ")), size=2.5, hjust=1.2)
 
 
-ggplot(ira_responses%>%
-         mutate(year=format(as.Date(date, format="%Y-%m-%d"),"%Y"))%>%
-         ungroup()%>%
-         filter(type != "ira_gift")%>%
-         group_by(year,type)%>%
-         summarize(responses=n())
-)+
-  geom_bar(aes(x=year, y=responses, fill=type), stat="identity",show.legend =TRUE)+
-  #scale_fill_brewer(palette="Dark2")+
-  xlab("")+
-  ylab("Number of IRA Gifts")+
-  ggtitle("Marketing Outreach Response")+
- # scale_y_continuous(labels = percent)+
-  theme_clean()+
-  theme(axis.text = element_text(size = 10),
-        axis.title=element_text(face="bold", size= 16),
-        plot.title=element_text(face = "bold", size= 24),
-        legend.key=element_rect(fill="white"),
-        legend.background =element_rect(fill="transparent", colour=NA))
-
-#Create character vector to use as a filter. Can create a function that combines both steps
-#by asking for the data frame, column name, and number of summary rows and then 
-top_sources<-ira_adj%>%group_by(source)%>%
-  summarize(source_counts=n_distinct(id))%>%
-  top_n(8)%>%
-  ungroup()%>%
-  select(source)%>%
-  unlist()
-
-#subset based on character vector of sources
-ggplot((subset(ira_adj, source %in% top_sources))%>%
-         group_by(year,source)%>%
-         summarize(source_counts=n_distinct(id))%>%
-         ungroup()%>%
-         rename(Source=source), 
-       aes(x=year,y=source_counts,fill=Source)) + 
-  geom_bar(stat="identity",position="fill",show.legend =TRUE)+
-  #scale_fill_brewer(palette="Dark2")+
-  xlab("")+
-  ylab("Percentage of IRA Donors")+
-  ggtitle("Top IRA Donor Sources are Alumni and Friends")+
-  scale_y_continuous(labels = percent)+
-  theme_clean()+
-  theme(axis.text = element_text(size = 10),
-        axis.title=element_text(face="bold", size= 16),
-        plot.title=element_text(face = "bold", size= 20),
-        legend.key=element_rect(fill="white"),
-        legend.background =element_rect(fill="transparent", colour=NA))
-
-#Create payment method character vector
-payments<-ira_adj%>%
-  group_by(payment_method)%>%
-  summarize(source_counts=n_distinct(id))%>%
-  select(payment_method)%>%
-  unlist()
-
-ggplot((subset(ira_adj, payment_method %in% payments))%>%
-         group_by(year,payment_method)%>%
-         summarize(payment_counts=n_distinct(nbr))%>%
-         ungroup()%>%
-         rename(`Payment Method`=payment_method), 
-       aes(x=year,y=payment_counts,fill=`Payment Method`)) + 
-  geom_bar(stat="identity",position="fill",show.legend =TRUE)+
-  xlab("")+
-  ylab("Percentage of Gifts")+
-  ggtitle("Consistent Payment Method Distribution over Time")+
-    theme_clean()+
-    theme(axis.text = element_text(size = 10),
-          axis.title=element_text(face="bold", size= 16),
-          plot.title=element_text(face = "bold", size= 20),
-          legend.key=element_rect(fill="white"),
-          legend.background =element_rect(fill="transparent", colour=NA))+
-  scale_y_continuous(labels = percent)
 
 
 #Average gift amount and year for IRA, non-IRA and All gifts.  No Trend lines.
@@ -349,7 +255,7 @@ ggplot((subset(ira_adj, payment_method %in% payments))%>%
   scale_y_continuous(labels=comma)+
   scale_x_date()+
   xlab("")+
-  ylab("Average Gift Amount")+
+  ylab("Average Monthly Gift Amount ($)")+
   scale_colour_discrete(name="Gift Type")+
   theme_clean()+
   theme(legend.position="bottom",
@@ -371,20 +277,20 @@ ggplot()+
   geom_smooth(
     data=(ira_adjusted_mean%>%
             filter(date>="2006-01-01")%>%
-            filter(variable=="trend")),
+            filter(variable=="raw")),
     aes(x=date, y=value, colour=type), size=1,se=FALSE
   )+
   geom_smooth(
     data=(ira_adjusted_mean%>%
             filter(date<"2006-01-01")%>%
-            filter(variable=="trend")),
+            filter(variable=="raw")),
     aes(x=date, y=value, colour=type), size=1,se=FALSE
   )+
   ggtitle("Examining the trends hints at\na need for a deeper analysis")+
   scale_y_continuous(labels=comma)+
   scale_x_date()+
   xlab("")+
-  ylab("Average Gift Amount")+
+  ylab("Average Monthly Gift Amount ($)")+
   scale_colour_discrete(name="Gift Type")+
   theme_clean()+
   theme(legend.position="bottom",
@@ -418,7 +324,7 @@ ggplot()+
   scale_y_continuous(labels=comma)+
   scale_x_date()+
   xlab("")+
-  ylab("Average Gift Amount")+
+  ylab("Average Monthly Gift Amount ($)")+
   scale_colour_discrete(name="Gift Type")+
   theme_clean()+
   theme(legend.position="bottom",
@@ -454,7 +360,7 @@ ggplot()+
   scale_y_continuous(labels=comma)+
   scale_x_date()+
   xlab("")+
-  ylab("Average Gift Amount")+
+  ylab("Average Monthly Gift Amount ($)")+
   scale_colour_discrete(name="Gift Type")+
   theme_clean()+
   theme(legend.position="bottom",
@@ -465,6 +371,29 @@ ggplot()+
         axis.title=element_text(face="bold", size= 16),
         plot.title=element_text(face = "bold", size= 24),
         legend.background =element_rect(fill="transparent", colour=NA))
+
+
+#Reponse to marketing line graph
+#Response to marketing
+ggplot()+
+  geom_line(data=(ira_adjusted%>%
+                    filter(variable=="raw"&
+                             date>="2011-09-21")%>%
+                    rename(Type=type)),
+            aes(x=date, y=value, colour=Type), size=1)+
+  
+  geom_vline(data=ira_mailings_summary, aes(xintercept = as.numeric(date)), colour="goldenrod", size=1)+
+  xlab("")+
+  ylab("Number of Gifts")+
+  scale_colour_discrete(name="Gift Type")+
+  ggtitle("Marketing outreach has no observable impact")+
+  theme_clean()+
+  theme(axis.text = element_text(size = 10),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24),
+        legend.key=element_rect(fill="white"),
+        legend.background =element_rect(fill="transparent", colour=NA))
+
 
 ######Slide 1:Summary Stats#######
 View(ira_adj %>%
@@ -481,35 +410,57 @@ View(ira_adj %>%
   )
   )
 
-View(ira_adj %>%
-       filter(trans_date>="2006-01-01"))
+
 
 #Score Plots
-ira_adj$GPS<- factor(ira_adj$GPS, levels=c("Least Likely", "Less Likely",
+ira_adj$GPS<- factor(ira_adj$gps, levels=c("Least Likely", "Less Likely",
                                            "Somewhat Likely", "More Likely", "Most Likely", ""))
 
-ira_adj$MGS<- factor(ira_adj$MGS, levels=c("Least Likely", "Less Likely",
+ira_adj$MGS<- factor(ira_adj$mgs, levels=c("Least Likely", "Less Likely",
                                            "Somewhat Likely", "More Likely", "Most Likely", ""))
+
+
+#Major Gift Score
+ggplot(ira_adj%>%
+         group_by(MGS)%>%
+         summarize(number=n_distinct(id))%>%
+         filter(MGS!=""))+
+  geom_bar(aes(MGS, y=number), stat="identity")+
+  xlab("Major Gift Score")+
+  ylab("Number of Donors")+
+  ylim(0,300)+
+  ggtitle("IRA Donors are more inclined to give Major Gifts")+
+  theme_clean()+
+  theme(legend.position="bottom",
+        legend.direction = "horizontal",
+        legend.box="horizontal",
+        legend.key=element_rect(fill="white"),
+        axis.text = element_text(size = 10),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face="bold", size= 24),
+        legend.background =element_rect(fill="transparent", colour=NA))
 
 #Gift Planning Score
 ggplot(ira_adj%>%
          group_by(GPS)%>%
-         summarize(number=n_distinct(id)))+
+         summarize(number=n_distinct(id))%>%
+         filter(GPS!=""))+
   geom_bar(aes(GPS, y=number), stat="identity")+
   xlab("Gift Planning Score")+
+  ylim(0,300)+
   ylab("Number of Donors")+
-  ggtitle("Number of IRA Donors by Gift Planning Score")+
-  theme_clean()
+  ggtitle("IRA Donors are more inclined to give Planned Gifts")+
+  theme_clean()+
+  theme(legend.position="bottom",
+        legend.direction = "horizontal",
+        legend.box="horizontal",
+        legend.key=element_rect(fill="white"),
+        axis.text = element_text(size = 10),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face="bold", size= 24),
+        legend.background =element_rect(fill="transparent", colour=NA))
 
-Major Gift Score
-ggplot(ira_adj%>%
-         group_by(MGS)%>%
-         summarize(number=n_distinct(id)))+
-  geom_bar(aes(MGS, y=number), stat="identity")+
-  xlab("Major Gift Score")+
-  ylab("Number of Donors")+
-  ggtitle("Number of IRA Donors by Major Gift Score")+
-  theme_clean()
+
 
 #Count by Decile
 
@@ -519,5 +470,35 @@ ggplot(ira_adj%>%
   geom_bar(aes(decile, y=number), stat="identity")+
   ggtitle("Decile, Based On Adjusted Total Lifetime Giving")+
   ylab("Number of Donors")+
-  xlab("Decile")+
-  theme_clean()
+  xlab("Giving Decile")+
+  theme_clean()+
+  theme(legend.position="bottom",
+        legend.direction = "horizontal",
+        legend.box="horizontal",
+        legend.key=element_rect(fill="white"),
+        axis.text = element_text(size = 10),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face="bold", size= 24),
+        legend.background =element_rect(fill="transparent", colour=NA))
+
+# Counts by gift size
+
+ggplot(ira_adj%>%filter(ira_amt > 0 & ira_amt <= 100000)%>%select(ira_amt), aes(x=ira_amt))+
+  geom_histogram(binwidth=5000)+
+  xlab("Gift Amount($)")+
+  ylab("Number of Gifts")+
+  ggtitle("60% of IRA Gifts are under $5,000")+
+  scale_x_continuous(labels = comma)+
+  xlim(NA,110001)+
+  scale_x_continuous(labels = comma)+
+  scale_y_continuous(labels = comma)+
+  theme_clean()+
+    theme(legend.position="bottom",
+        legend.direction = "horizontal",
+        legend.box="horizontal",
+        legend.key=element_rect(fill="white"),
+        axis.text = element_text(size = 12),
+        axis.title=element_text(face="bold", size= 16),
+        plot.title=element_text(face = "bold", size= 24,hjust = 0.5),
+        legend.background =element_rect(fill="transparent", colour=NA))
+  

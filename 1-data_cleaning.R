@@ -16,7 +16,7 @@ date <-as.Date(Sys.Date())
 #summary tables i.e. if you want number of IRA gifts by month, use the ira_yearmon table as your basis.
 
 #Read in .csv
-ira_data<- read.csv("R:/AIM/Advanced Analytics/OGP_IRA/ira_new.csv",
+ira_data<- read.csv("R:/AIM/Advanced Analytics/OGP_IRA/ira_new0210.csv",
                     header=TRUE,
                     stringsAsFactors=FALSE
 )
@@ -42,11 +42,17 @@ ira_mailings$touch<- tolower(ira_mailings$touch)
 source("R:/AIM/Advanced Analytics/Functions/year_format.r")
 
 #Format dates
-ira_data$trans_date <- dmy(ira_data$trans_date)
+ira_data$trans_date <- mdy(ira_data$trans_date)
 ira_data$year <- year(ira_data$trans_date)
-ira_data$birth_date<-dmy(ira_data$birth_date)
-ira_data$death_date<-dmy(ira_data$death_date)
+ira_data$birth_date<-mdy(ira_data$birth_date)
+ira_data$death_date<-mdy(ira_data$death_date)
 ira_mailings$date= mdy(ira_mailings$date)
+
+#Fix bad birthdays
+
+ira_data$birth_date<-as.Date(ifelse(ira_data$birth_date > "2000-01-01", 
+                                    format(ira_data$birth_date, "19%y-%m-%d"), 
+                                    format(ira_data$birth_date)))
 
 #Create mailing summary data frame
 ira_mailings_summary<- ira_mailings%>%
@@ -251,6 +257,10 @@ ira_adj<-ira_adj%>%
   move_column(c("age"), "after", "age_first_ira")%>%
   move_column(c("ira_eligible"), "after", "trans_date")%>%
   ungroup()%>%
+  group_by(id)%>%
+  arrange(trans_date)%>%
+  mutate(age_at_trans=((as.numeric(trans_date)/365)+1970)-(2017-age))%>%
+  ungroup()%>%
   mutate(gift_age_bracket=ifelse(age<70.5, "<70.5",
                                  ifelse(age>=70.5 & age<75, "70.5-75",
                                         ifelse(age>=75 & age<80, "75-80",
@@ -412,7 +422,7 @@ id_summary<- ira_adj%>%
 #IRA gift amounts as nominal amounts.
 ira_yearmon<-ira_adj%>%
   ungroup()%>%
-  filter(norm_outlier_score<.020)%>%
+  filter(norm_outlier_score<.20)%>%
   filter(decile!="Top" | decile !="10")%>%
   filter(adj_amt<=1000000)%>%
   group_by(yearmon)%>%
