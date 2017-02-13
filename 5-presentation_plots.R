@@ -42,7 +42,7 @@ ggplot(ira_adj%>%
   geom_point(aes(x=age_at_trans,y=time_between,color=as.factor(ira_law), size=avg_amt))+
   xlim(70.5,88)+
   xlab("Age At Time of Gift")+
-  ylim(0,500)+
+  ylim(0,365)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
   scale_size_continuous(range=c(0,20),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
@@ -83,7 +83,7 @@ ggplot(ira_adj%>%
             alpha=.5)+
   xlim(70.5,88)+
   xlab("Age At Time of Gift")+
-  ylim(0,500)+
+  ylim(0,365)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
   scale_size_continuous(range=c(0,20),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
@@ -124,7 +124,7 @@ ggplot(ira_adj%>%
             alpha=.5)+
   xlim(70.5,88)+
   xlab("Age At Time of Gift")+
-  ylim(0,500)+
+  ylim(0,365)+
   ylab("Frequency of Giving (days)")+
   scale_color_discrete(name="IRA Law", labels=c("Before", "After"))+
   scale_size_continuous(range=c(0,30),name="Average Gift Amount",guide = guide_legend(override.aes = list(colour = "#F8766D")))+
